@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JustBin.</title>
+    <link rel="stylesheet" href="index.css">
+    <script src="index.js"></script>
+    <style>
+        * {
+            transition: all 0.3s;
+        }
+    </style>
+    <script>
+        function isValidColor(strColor) {
+            return /^#([0-9A-F]{3}){1,2}$/i.test(strColor)
+        }
+        let oldCss = "";
+        function onInput() {
+            const background = document.getElementById("background").value
+            const foreground = document.getElementById("foreground").value
+            const css = document.getElementById("css").value
+            if (isValidColor(background) && isValidColor(foreground)) {
+                oldCss = cssFrom(background, foreground, css);
+            } else {
+                oldCss = cssFrom("#000000", "#ffffff", "")
+            }
+            loadTheme(oldCss);
+        }
+    </script>
+</head>
+<body class="centered-container" style="gap: 12px">
+<input id="name" placeholder="Edit me">
+<p style="margin-bottom: 40px">by Hello</p>
+<input id="foreground" value="#ffffff" placeholder="foreground color" style="font-size: xx-large" oninput="onInput()">
+<input id="background" value="#000000" placeholder="background color" style="font-size: xx-large" oninput="onInput()">
+<input id="css" value="" placeholder="css" style="font-size: xx-large" oninput="onInput()">
+</body>
+</html>
