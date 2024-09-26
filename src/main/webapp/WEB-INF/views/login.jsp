@@ -33,9 +33,6 @@
 <input id="password" oninput="onInput()" type="password" style="font-size: xx-large" placeholder="password">
 <div style="display: flex; flex-direction: column; gap: 12px">
     <t:button primary="true" onclick="login()" style="margin-top: 40px; width: 200px">Log in</t:button>
-    <%--<div onclick="login()" class="hover-button-background" style="margin-top: 40px; cursor: pointer">
-        <div class="hover-button-primary" style="width: 200px">Log in</div>
-    </div>--%>
     <a href="<c:url value="/signup"/>">
         <p>or sign up</p>
     </a>

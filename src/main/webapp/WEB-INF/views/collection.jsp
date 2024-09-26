@@ -4,7 +4,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <html lang="en">
-<t:header title="Collection.">
+<t:header title="${collectionName}">
     <style>
         .binary-file-card-icon:hover .new-document-type {
             transition: all 0.3s;
@@ -43,7 +43,6 @@
     </style>
     <script>
         reloadOnBack()
-
         function onLoad() {
             let recent = JSON.parse(localStorage.getItem("recent_collections"));
             if (recent == null) recent = Array.of();
@@ -55,13 +54,14 @@
             localStorage.setItem("recent_collections", JSON.stringify(recent));
         }
 
-        const changeName = debounce(1000, () => {
+        function changeNameNow() {
             onLoad()
             fetch("/c/${collectionID}/edit_name", {
                 method: "POST",
                 body: document.getElementById("collection-name-input").value
             })
-        })
+        }
+        const changeName = debounce(1000, changeNameNow)
 
         function uploadBin() {
 
@@ -97,16 +97,16 @@
         }
     </script>
 </t:header>
-<body onload="onLoad(); loadDrag()" class="centered-container">
+<body onpagehide="changeNameNow()" onload="onLoad(); loadDrag()" class="centered-container">
 <input onfocusout="changeName()" id="collection-name-input" style="width: 100%; margin-top: 50px" size="20"
-       value="${collectionName}" oninput="changeName()">
+       value="<c:out value="${collectionName}"/>" oninput="changeName()">
 <div id="content-container" class="content-container" style="padding-top: 20px">
     <jsp:useBean id="files" scope="request" type="java.util.List"/>
     <c:forEach items="${files}" var="file">
-        <a href="<c:url value="/v/${file.id()}"/>">
+        <a href="<c:url value="/v/${collectionID}/${file.id()}"/>">
             <div class="hover-button-background">
                 <div class="hover-button">
-                    <div class="binary-file-card-name">${file.name()}</div>
+                    <div class="binary-file-card-name"><c:out value="${file.name()}"/></div>
                     <div class="binary-file-card-hint"></div>
                 </div>
             </div>

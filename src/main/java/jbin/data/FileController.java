@@ -17,24 +17,22 @@ public class FileController {
         this.dataDir = new File("~/IdeaProjects/servlet3/bin");
     }
 
-    public boolean upsert(BinaryFile file, InputStream data) {
-        var collectionDir = new File(dataDir, file.collectionId().toString());
-        collectionDir.mkdirs();
+    public UUID upsert(BinaryFile file, InputStream data) {
         var id = repo.upsert(file);
-        if (id == null) return false;
-        var localFile = new File(collectionDir, id.toString());
-        if (localFile.exists() && file.readonly()) return false;
+        if (id == null) return null;
+        var localFile = new File(dataDir, id.toString());
+        if (localFile.exists() && file.readonly()) return id;
         try {
             Files.copy(data, localFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            return true;
+            return id;
         } catch (IOException e) {
             e.printStackTrace();
-            return false;
+            return null;
         }
     }
 
-    public InputStream get(String fileId, String collectionId) {
-        var file = new File(new File(dataDir, collectionId), fileId);
+    public InputStream get(String fileId) {
+        var file = new File(dataDir, fileId);
         try {
             return new BufferedInputStream(new FileInputStream(file));
         } catch (FileNotFoundException e) {
@@ -43,8 +41,8 @@ public class FileController {
         }
     }
 
-    public boolean delete(String fileId, String collectionId) {
-        var file = new File(new File(dataDir, collectionId), fileId);
+    public boolean delete(String fileId) {
+        var file = new File(dataDir, fileId);
         if (!file.exists()) return false;
         try {
             var deletedFromRepo = repo.delete(UUID.fromString(fileId));

@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 public class UserControllerTest {
     @Test
     void register() {
-        var controller = DI.getUserController();
+        var controller = DI.current().userController();
         controller.register("ABC", "DEF");
     }
 }

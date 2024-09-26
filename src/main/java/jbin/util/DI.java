@@ -1,83 +1,127 @@
 package jbin.util;
 
 import jbin.data.*;
-import jbin.domain.BinaryCollectionRepository;
-import jbin.domain.BinaryFileRepository;
-import jbin.domain.ThemeRepository;
-import jbin.domain.UserRepository;
+import jbin.domain.*;
 import jbin.orm.Orm;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+class DICache {
+    static DI _current = null;
+}
+
 public class DI {
-    private static Connection connection;
-    public static Connection getConnection() {
-        if (connection == null) {
+    public static DI current() {
+        if (DICache._current == null) {
+            DICache._current = new DI();
+        }
+        return DICache._current;
+    }
+
+    private Connection _connection;
+
+    public Connection connection() {
+        if (_connection == null) {
             try {
                 Class.forName("org.postgresql.Driver");
-                connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/jbin", "renattele", "12345678");
+                _connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/jbin", "renattele", "12345678");
             } catch (SQLException | ClassNotFoundException e) {
                 e.printStackTrace();
                 return null;
             }
         }
-        return connection;
-    }
-    private static Orm orm;
-    public static Orm getOrm() {
-        if (orm == null) {
-            orm = new Orm(getConnection());
-        }
-        return orm;
+        return _connection;
     }
 
-    private static BinaryCollectionRepository binaryCollectionRepository;
-    public static BinaryCollectionRepository getBinaryCollectionRepository() {
-        if (binaryCollectionRepository == null) {
-            binaryCollectionRepository = getOrm().create(BinaryCollectionRepository.class);
+    private Orm _orm;
+
+    public Orm orm() {
+        if (_orm == null) {
+            _orm = new Orm(connection());
         }
-        return binaryCollectionRepository;
+        return _orm;
     }
 
-    private static BinaryFileRepository binaryFileRepository;
-    public static BinaryFileRepository getBinaryFileRepository() {
-        if (binaryFileRepository == null) {
-            binaryFileRepository = getOrm().create(BinaryFileRepository.class);
+    private BinaryCollectionRepository _binaryCollectionRepository;
+
+    public BinaryCollectionRepository binaryCollectionRepository() {
+        if (_binaryCollectionRepository == null) {
+            _binaryCollectionRepository = orm().create(BinaryCollectionRepository.class);
         }
-        return binaryFileRepository;
+        return _binaryCollectionRepository;
     }
 
-    private static ThemeRepository themeRepository;
-    public static ThemeRepository getThemeRepository() {
-        if (themeRepository == null) {
-            themeRepository = getOrm().create(ThemeRepository.class);
+    private BinaryFileRepository _binaryFileRepository;
+
+    public BinaryFileRepository binaryFileRepository() {
+        if (_binaryCollectionRepository == null) {
+            _binaryFileRepository = orm().create(BinaryFileRepository.class);
         }
-        return themeRepository;
+        return _binaryFileRepository;
     }
 
-    private static UserRepository userRepository;
-    public static UserRepository getUserRepository() {
-        if (userRepository == null) {
-            userRepository = getOrm().create(UserRepository.class);
+    private FileCollectionRepository _fileCollectionRepository;
+
+    public FileCollectionRepository fileCollectionRepository() {
+        if (_fileCollectionRepository == null) {
+            _fileCollectionRepository = orm().create(FileCollectionRepository.class);
         }
-        return userRepository;
+        return _fileCollectionRepository;
     }
 
-    private static FileController fileController;
-    public static FileController getFileController() {
-        if (fileController == null) {
-            fileController = new FileController(getBinaryFileRepository());
+    private ThemeRepository _themeRepository;
+
+    public ThemeRepository themeRepository() {
+        if (_themeRepository == null) {
+            _themeRepository = orm().create(ThemeRepository.class);
         }
-        return fileController;
+        return _themeRepository;
     }
 
-    private static UserController userController;
-    public static UserController getUserController() {
-        if (userController == null) {
-            userController = new UserController(getUserRepository());
+    private UserRepository _userRepository;
+
+    public UserRepository userRepository() {
+        if (_userRepository == null) {
+            _userRepository = orm().create(UserRepository.class);
         }
-        return userController;
+        return _userRepository;
+    }
+
+    private FileController _fileController;
+    public FileController fileController() {
+        if (_fileController == null) {
+            _fileController = new FileController(binaryFileRepository());
+        }
+        return _fileController;
+    }
+
+    private UserController _userController;
+    public UserController userController() {
+        if (_userController == null) {
+            _userController = new UserController(userRepository());
+        }
+        return _userController;
+    }
+
+    private Logger _logger;
+    public Logger logger() {
+        if (_logger == null) {
+            _logger = new FileLogger("logs.txt", "errors.txt");
+        }
+        return _logger;
+    }
+
+    public void loadAll() {
+        connection();
+        orm();
+        binaryFileRepository();
+        binaryCollectionRepository();
+        fileCollectionRepository();
+        themeRepository();
+        userController();
+        userRepository();
+        fileController();
     }
 }

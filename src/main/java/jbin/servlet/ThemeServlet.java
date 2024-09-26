@@ -27,7 +27,7 @@ public class ThemeServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        var repo = DI.getThemeRepository();
+        var repo = DI.current().themeRepository();
         req.setAttribute("themes", repo.getAll());
         getServletContext().getRequestDispatcher("/WEB-INF/views/themes.jsp").forward(req, resp);
     }
@@ -39,9 +39,9 @@ public class ThemeServlet extends HttpServlet {
         var user = new String(Base64.getDecoder().decode(req.getHeader("X-user")));
         var password = new String(Base64.getDecoder().decode(req.getHeader("X-pass")));
         if (action.equals("create")) {
-            if (DI.getUserController().areCredentialsCorrect(user, password)) {
-                var dbUser = DI.getUserRepository().findByName(user);
-                var id = DI.getThemeRepository().upsert(new Theme(
+            if (DI.current().userController().areCredentialsCorrect(user, password)) {
+                var dbUser = DI.current().userRepository().findByName(user);
+                var id = DI.current().themeRepository().upsert(new Theme(
                         null,
                         "Edit me",
                         "#ffffff",

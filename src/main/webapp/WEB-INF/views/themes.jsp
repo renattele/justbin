@@ -59,14 +59,14 @@
         <c:forEach items="${themes}" var="theme" varStatus="loop">
             <style>
                 #theme-${loop.index} {
-                    --background-color: ${theme.backgroundColor()};
-                    --foreground-color: ${theme.foregroundColor()};
+                    --background-color: <c:out value="${theme.backgroundColor()}"/>;
+                    --foreground-color: <c:out value="${theme.foregroundColor()}"/>;
                 }
             </style>
             <div id="theme-${loop.index}">
                 <t:button
                         href="/t/${theme.id()}">
-                    ${theme.name()}
+                    <c:out value="${theme.name()}"/>
                 </t:button>
             </div>
         </c:forEach>

@@ -22,7 +22,7 @@ public class LoginServlet extends HttpServlet {
         try (var reader = req.getReader()) {
             var username = new String(Base64.getDecoder().decode(reader.readLine()));
             var password = new String(Base64.getDecoder().decode(reader.readLine()));
-            var controller = DI.getUserController();
+            var controller = DI.current().userController();
             if (controller.areCredentialsCorrect(username, password)) {
                 resp.setStatus(200);
             } else {

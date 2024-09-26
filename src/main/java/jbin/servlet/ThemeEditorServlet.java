@@ -2,7 +2,6 @@ package jbin.servlet;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,20 +10,21 @@ import jbin.util.DI;
 import jbin.util.StringUtil;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @WebServlet("/t/*")
 public class ThemeEditorServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         var id = req.getPathInfo().replace("/", "");
-        var theme = DI.getThemeRepository().getById(UUID.fromString(id));
-        var owner = DI.getUserRepository().findById(theme.owner());
+        var theme = DI.current().themeRepository().getById(UUID.fromString(id));
+        req.setAttribute("owner", "");
+        if (theme.owner() != null) {
+            var owner = DI.current().userRepository().findById(theme.owner());
+            req.setAttribute("owner", owner != null ? owner.username() : "");
+        }
         req.setAttribute("theme", theme);
-        req.setAttribute("owner", owner != null ? owner.username() : "");
         getServletContext().getRequestDispatcher("/WEB-INF/views/theme_editor.jsp").forward(req, resp);
     }
 
@@ -33,14 +33,14 @@ public class ThemeEditorServlet extends HttpServlet {
         var path = StringUtil.trimStart(req.getPathInfo(), '/');
         var id = path.substring(0, path.indexOf("/"));
         var action = path.substring(path.indexOf("/") + 1);
-        var oldTheme = DI.getThemeRepository().getById(UUID.fromString(id));
+        var oldTheme = DI.current().themeRepository().getById(UUID.fromString(id));
 
         var user = new String(Base64.getDecoder().decode(req.getHeader("X-user")));
         var password = new String(Base64.getDecoder().decode(req.getHeader("X-pass")));
-        var dbUser = DI.getUserRepository().findByName(user);
-        if (DI.getUserController().areCredentialsCorrect(user, password) && dbUser.id().equals(oldTheme.owner())) {
+        var dbUser = DI.current().userRepository().findByName(user);
+        if (DI.current().userController().areCredentialsCorrect(user, password) && dbUser.id().equals(oldTheme.owner())) {
             if (action.equals("delete")) {
-                DI.getThemeRepository().delete(oldTheme.id());
+                DI.current().themeRepository().delete(oldTheme.id());
                 resp.setStatus(200);
             } else if (action.equals("edit")) {
                 var name = oldTheme.css();
@@ -70,7 +70,7 @@ public class ThemeEditorServlet extends HttpServlet {
                         oldTheme.owner()
                 );
                 System.out.println(newTheme);
-                DI.getThemeRepository().upsert(newTheme);
+                DI.current().themeRepository().upsert(newTheme);
             }
         } else {
             resp.sendError(HttpServletResponse.SC_FORBIDDEN);

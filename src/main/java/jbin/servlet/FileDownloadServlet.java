@@ -16,9 +16,9 @@ public class FileDownloadServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         var path = StringUtil.trimStart(req.getPathInfo(), '/');
         var id = path.substring(0, path.indexOf("/"));
-        var file = DI.getBinaryFileRepository().findById(UUID.fromString(id));
+        var file = DI.current().binaryFileRepository().findById(UUID.fromString(id));
         resp.setContentType(file.contentType());
-        var stream = DI.getFileController().get(file.id().toString(), file.collectionId().toString());
+        var stream = DI.current().fileController().get(file.id().toString());
         var out = resp.getOutputStream();
         stream.transferTo(out);
         stream.close();

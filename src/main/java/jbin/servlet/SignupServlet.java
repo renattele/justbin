@@ -22,7 +22,7 @@ public class SignupServlet extends HttpServlet {
         try (var reader = req.getReader()) {
             var username = new String(Base64.getDecoder().decode(reader.readLine()));
             var password = new String(Base64.getDecoder().decode(reader.readLine()));
-            var registered = DI.getUserController().register(username, password);
+            var registered = DI.current().userController().register(username, password);
             if (registered) {
                 resp.setStatus(200);
             } else {
