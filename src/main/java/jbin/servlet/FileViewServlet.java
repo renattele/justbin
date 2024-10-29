@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jbin.domain.BinaryFile;
+import jbin.domain.FileCollection;
 import jbin.util.DI;
 import jbin.util.StringUtil;
 
@@ -17,15 +18,10 @@ import java.util.UUID;
 public class FileViewServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        var path = StringUtil.trimStart(req.getPathInfo(), '/');
-        var pathSplitted = path.split("/");
-        var collectionId = pathSplitted[0];
-        var fileId = pathSplitted[1];
+        var fileId = StringUtil.trimStart(req.getPathInfo(), '/');
         var file = DI.current().binaryFileRepository().findById(UUID.fromString(fileId));
         req.setAttribute("fileId", fileId);
-        req.setAttribute("collectionId", collectionId);
         req.setAttribute("filename", file.name());
-        req.setAttribute("readonly", file.readonly());
         req.setAttribute("contentType", file.contentType());
         req.setAttribute("content", "");
         if (file.contentType().startsWith("text")) {
@@ -40,47 +36,24 @@ public class FileViewServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         try {
-            var path = StringUtil.trimStart(req.getPathInfo(), '/');
-            var pathSplitted = path.split("/");
-            var collectionId = pathSplitted[0];
-            var fileId = pathSplitted[1];
-            var action = pathSplitted[2];
-            switch (action) {
-                case "edit_name" -> {
-                    var oldFile = DI.current().binaryFileRepository().findById(UUID.fromString(fileId));
-                    /*if (oldFile.readonly()) {
-                        resp.setStatus(403);
-                    } else {*/
-                        try (var reader = req.getReader()) {
-                            var newName = reader.readLine();
-                            DI.current().binaryFileRepository().upsert(new BinaryFile(
-                                    oldFile.id(),
-                                    newName,
-                                    oldFile.creationDate(),
-                                    Instant.now(),
-                                    false,
-                                    oldFile.contentType()
-                            ));
-                            resp.setStatus(200);
-                        }
-                }
-                case "edit_content" -> {
-                    var oldFile = DI.current().binaryFileRepository().findById(UUID.fromString(fileId));
-                    if (oldFile.readonly()) {
-                        resp.setStatus(403);
-                    } else {
-                        DI.current().fileController().upsert(oldFile, req.getInputStream());
-                        resp.setStatus(200);
-                    }
-                }
-                case "delete" -> {
-                    var oldFile = DI.current().binaryFileRepository().findById(UUID.fromString(fileId));
-                    DI.current().fileCollectionRepository().deleteByFileAndCollectionId(oldFile.id(), UUID.fromString(collectionId));
-                    resp.setStatus(200);
+            var requestName = req.getPathInfo().replaceFirst("/", "");
+            var split = requestName.split("/");
+            System.out.println(requestName);
+            var fileId = UUID.fromString(split[0]);
+            if (split[1].equals("toggle_collection")) {
+                var collectionId = UUID.fromString(req.getParameter("q"));
+                System.out.println(collectionId);
+                var exists = DI.current().fileCollectionRepository().getAllByCollectionId(collectionId)
+                        .stream().anyMatch(fileCollection -> fileCollection.fileId().equals(fileId));
+                System.out.println(exists);
+                if (exists) {
+                    DI.current().fileCollectionRepository().deleteByFileAndCollectionId(fileId, collectionId);
+                } else {
+                    DI.current().fileCollectionRepository().upsert(new FileCollection(null, fileId, collectionId));
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         }
     }
 }

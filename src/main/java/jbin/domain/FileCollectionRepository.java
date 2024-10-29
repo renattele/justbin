@@ -31,6 +31,9 @@ public interface FileCollectionRepository {
     @Query("select * from file_collection where collection_id = ?")
     List<FileCollection> getAllByCollectionId(UUID id);
 
+    @Query("select * from file_collection where file_id = ?")
+    List<FileCollection> getAllByFileId(UUID id);
+
     @Query("delete from file_collection where id = ?")
     boolean deleteById(UUID id);
 

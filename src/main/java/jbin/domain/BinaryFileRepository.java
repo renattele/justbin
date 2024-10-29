@@ -3,6 +3,7 @@ package jbin.domain;
 import jbin.orm.Query;
 import jbin.orm.Table;
 
+import java.util.List;
 import java.util.UUID;
 
 @Table(name = "binary_files", createTable = """
@@ -31,4 +32,7 @@ public interface BinaryFileRepository {
 
     @Query("select * from binary_files where id = ?")
     BinaryFile findById(UUID id);
+
+    @Query("select * from binary_files")
+    List<BinaryFile> getAll();
 }

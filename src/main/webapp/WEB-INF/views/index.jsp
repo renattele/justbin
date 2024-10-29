@@ -24,9 +24,8 @@
         }
 
         function updateCollections() {
-            let recent = JSON.parse(localStorage.getItem("recent_collections"));
+            let recent = getRecent();
             let html = "";
-            if (recent == null) recent = Array.of();
             if (recent.length !== 0) {
                 html += `
                 <div onclick="clearRecent()" style="cursor: pointer">
@@ -34,7 +33,6 @@
                 </div>
                 `
             }
-            recent.reverse()
             recent.forEach(collection => {
                 html += `
             <t:button href="$href" style="width: 280px">$collection</t:button>

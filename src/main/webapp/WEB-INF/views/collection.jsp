@@ -43,6 +43,7 @@
     </style>
     <script>
         reloadOnBack()
+
         function onLoad() {
             let recent = JSON.parse(localStorage.getItem("recent_collections"));
             if (recent == null) recent = Array.of();
@@ -61,14 +62,31 @@
                 body: document.getElementById("collection-name-input").value
             })
         }
+
         const changeName = debounce(1000, changeNameNow)
 
         function uploadBin() {
-
+            const input = document.createElement("input");
+            input.type = 'file';
+            input.onchange = () => {
+                const formData = new FormData();
+                const files = input.files;
+                for (let file of files) {
+                    formData.append(file.name, file);
+                }
+                uploadFiles(formData);
+            }
+            input.click()
+            input.remove()
         }
 
-        function createTxt() {
-
+        function uploadFiles(formData) {
+            fetch("/c/${collectionID}/create_bin", {
+                method: "POST",
+                body: formData
+            }).then(response => {
+                location.reload()
+            })
         }
 
         function loadDrag() {
@@ -86,13 +104,7 @@
                     const file = files.dataTransfer.items[i];
                     formData.append(file.filename, file.getAsFile());
                 }
-                console.log(formData);
-                fetch("/c/${collectionID}/create_bin", {
-                    method: "POST",
-                    body: formData
-                }).then(response => {
-                    location.reload()
-                })
+                uploadFiles(formData)
             })
         }
     </script>
@@ -103,28 +115,11 @@
 <div id="content-container" class="content-container" style="padding-top: 20px">
     <jsp:useBean id="files" scope="request" type="java.util.List"/>
     <c:forEach items="${files}" var="file">
-        <a href="<c:url value="/v/${collectionID}/${file.id()}"/>">
-            <div class="hover-button-background">
-                <div class="hover-button">
-                    <div class="binary-file-card-name"><c:out value="${file.name()}"/></div>
-                    <div class="binary-file-card-hint"></div>
-                </div>
-            </div>
-        </a>
+        <t:button href="/v/${file.id()}">
+            <c:out value="${file.name()}"/>
+        </t:button>
     </c:forEach>
-    <div class="hover-button-background">
-        <div class="hover-button-primary new-document-button">
-            <div class="new-document-nohover">New document</div>
-            <div style="display: flex; width: 100%">
-                <div style="flex: 1; cursor: pointer" onclick="createTxt()" class="new-document-type">
-                    txt
-                </div>
-                <div style="flex: 1; cursor:pointer;" onclick="uploadBin()" class="new-document-type">
-                    bin
-                </div>
-            </div>
-        </div>
-    </div>
+    <t:button onclick="uploadBin()" primary="true">New document</t:button>
 </div>
 
 </body>

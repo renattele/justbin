@@ -7,6 +7,13 @@ function setTheme(string) {
     loadTheme()
 }
 
+function getRecent() {
+    let recent = JSON.parse(localStorage.getItem("recent_collections"));
+    if (recent == null) recent = Array.of();
+    recent.reverse();
+    return recent;
+}
+
 function cssFrom(background, foreground, css) {
     return rootCssFrom(background, foreground, css);
 }

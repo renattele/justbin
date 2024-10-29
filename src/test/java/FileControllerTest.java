@@ -1,6 +1,7 @@
 import jbin.data.FileController;
 import jbin.domain.BinaryFile;
 import jbin.domain.BinaryFileRepository;
+import jbin.domain.FileCollectionRepository;
 import jbin.orm.Orm;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,7 @@ public class FileControllerTest {
         Class.forName("org.postgresql.Driver");
         var connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/jbin", "renattele", "12345678");
         var orm = new Orm(connection);
-        controller = new FileController(orm.create(BinaryFileRepository.class));
+        controller = new FileController(orm.create(BinaryFileRepository.class), orm.create(FileCollectionRepository.class));
     }
 
     @Test

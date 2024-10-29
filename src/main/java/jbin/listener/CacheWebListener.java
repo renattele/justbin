@@ -7,9 +7,10 @@ import jbin.util.DI;
 
 @WebListener
 public class CacheWebListener implements ServletContextListener {
-    @Override
-    public void contextInitialized(ServletContextEvent sce) {
-        ServletContextListener.super.contextInitialized(sce);
-        DI.current().loadAll();
-    }
+	@Override
+	public void contextInitialized(ServletContextEvent sce) {
+		System.setErr(System.out);
+		ServletContextListener.super.contextInitialized(sce);
+		DI.current().loadAll();
+	}
 }

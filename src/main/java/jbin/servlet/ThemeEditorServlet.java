@@ -69,7 +69,6 @@ public class ThemeEditorServlet extends HttpServlet {
                         css,
                         oldTheme.owner()
                 );
-                System.out.println(newTheme);
                 DI.current().themeRepository().upsert(newTheme);
             }
         } else {
