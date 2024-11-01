@@ -51,18 +51,7 @@ public class Orm {
 
 	private String getQuerySql(String tableName, Method method) {
 		var query = method.getAnnotation(Query.class);
-		if (query != null)
-			return query.value();
-		var select = method.getAnnotation(Select.class);
-		if (select != null)
-			return "select * from " + tableName + " " + select.value();
-		var upsert = method.getAnnotation(Insert.class);
-		if (upsert != null)
-			return "insert into " + tableName + " " + upsert.value();
-		var delete = method.getAnnotation(Delete.class);
-		if (delete != null)
-			return "delete from " + tableName + " " + delete.value();
-		return null;
+		return query.value();
 	}
 
 	private Object processResult(Method method, Class<?> returnType, PreparedStatement statement, UUID id)

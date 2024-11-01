@@ -8,8 +8,8 @@
 <c:set var="cl" value="${(empty primary) ? 'hover-button' : 'hover-button-primary'}"/>
 
 <c:if test="${not empty href}">
-    <a href="${href}" style="${style}">
-        <div id="${id}" onclick="${onclick}" class="hover-button-background" style="cursor: pointer">
+    <a href="<c:out value="${href}"/>" style="<c:out value="${style}"/>">
+        <div id="<c:out value="${id}"/>" onclick="${onclick}" class="hover-button-background" style="cursor: pointer">
             <div class="${cl}">
                 <jsp:doBody/>
             </div>
@@ -17,7 +17,7 @@
     </a>
 </c:if>
 <c:if test="${empty href}">
-    <div id="${id}" onclick="${onclick}" class="hover-button-background" style="cursor: pointer; ${style}">
+    <div id="<c:out value="${id}"/>" onclick="${onclick}" class="hover-button-background" style="cursor: pointer; ${style}">
         <div class="${cl}">
             <jsp:doBody/>
         </div>

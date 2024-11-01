@@ -9,122 +9,127 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 class DICache {
-	static DI _current = null;
+    static DI _current = null;
 }
 
 public class DI {
-	public static DI current() {
-		if (DICache._current == null) {
-			DICache._current = new DI();
-		}
-		return DICache._current;
-	}
+    public static DI current() {
+        if (DICache._current == null) {
+            DICache._current = new DI();
+        }
+        return DICache._current;
+    }
 
-	private Connection _connection;
+    private Connection _connection;
+    private ConnectionController<Connection> _connectionController;
 
-	public Connection connection() {
-		if (_connection == null) {
-			try {
-				Class.forName("org.postgresql.Driver");
-				_connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/jbin", "postgres", "12345678");
-			} catch (SQLException | ClassNotFoundException e) {
-				e.printStackTrace();
-				return null;
-			}
-		}
-		return _connection;
-	}
+    private synchronized ConnectionController<Connection> connectionController() {
+        if (_connectionController == null) {
+            _connectionController = new ConnectionControllerImpl();
+        }
+        return _connectionController;
+    }
 
-	private Orm _orm;
+    public synchronized Connection connection() {
+        if (_connection == null) {
+            _connection = connectionController().get("jdbc:postgresql://localhost:5432/",
+                    "jbin",
+                    "postgres",
+                    "12345678");
+        }
+        return _connection;
+    }
 
-	public Orm orm() {
-		if (_orm == null) {
-			_orm = new Orm(connection());
-		}
-		return _orm;
-	}
+    private Orm _orm;
 
-	private BinaryCollectionRepository _binaryCollectionRepository;
+    public synchronized Orm orm() {
+        if (_orm == null) {
+            _orm = new Orm(connection());
+        }
+        return _orm;
+    }
 
-	public BinaryCollectionRepository binaryCollectionRepository() {
-		if (_binaryCollectionRepository == null) {
-			_binaryCollectionRepository = orm().create(BinaryCollectionRepository.class);
-		}
-		return _binaryCollectionRepository;
-	}
+    private BinaryCollectionRepository _binaryCollectionRepository;
 
-	private BinaryFileRepository _binaryFileRepository;
+    public synchronized BinaryCollectionRepository binaryCollectionRepository() {
+        if (_binaryCollectionRepository == null) {
+            _binaryCollectionRepository = orm().create(BinaryCollectionRepository.class);
+        }
+        return _binaryCollectionRepository;
+    }
 
-	public BinaryFileRepository binaryFileRepository() {
-		if (_binaryCollectionRepository == null) {
-			_binaryFileRepository = orm().create(BinaryFileRepository.class);
-		}
-		return _binaryFileRepository;
-	}
+    private BinaryFileRepository _binaryFileRepository;
 
-	private FileCollectionRepository _fileCollectionRepository;
+    public synchronized BinaryFileRepository binaryFileRepository() {
+        if (_binaryCollectionRepository == null) {
+            _binaryFileRepository = orm().create(BinaryFileRepository.class);
+        }
+        return _binaryFileRepository;
+    }
 
-	public FileCollectionRepository fileCollectionRepository() {
-		if (_fileCollectionRepository == null) {
-			_fileCollectionRepository = orm().create(FileCollectionRepository.class);
-		}
-		return _fileCollectionRepository;
-	}
+    private FileCollectionRepository _fileCollectionRepository;
 
-	private ThemeRepository _themeRepository;
+    public synchronized FileCollectionRepository fileCollectionRepository() {
+        if (_fileCollectionRepository == null) {
+            _fileCollectionRepository = orm().create(FileCollectionRepository.class);
+        }
+        return _fileCollectionRepository;
+    }
 
-	public ThemeRepository themeRepository() {
-		if (_themeRepository == null) {
-			_themeRepository = orm().create(ThemeRepository.class);
-		}
-		return _themeRepository;
-	}
+    private ThemeRepository _themeRepository;
 
-	private UserRepository _userRepository;
+    public synchronized ThemeRepository themeRepository() {
+        if (_themeRepository == null) {
+            _themeRepository = orm().create(ThemeRepository.class);
+        }
+        return _themeRepository;
+    }
 
-	public UserRepository userRepository() {
-		if (_userRepository == null) {
-			_userRepository = orm().create(UserRepository.class);
-		}
-		return _userRepository;
-	}
+    private UserRepository _userRepository;
 
-	private FileController _fileController;
+    public synchronized UserRepository userRepository() {
+        if (_userRepository == null) {
+            _userRepository = orm().create(UserRepository.class);
+        }
+        return _userRepository;
+    }
 
-	public FileController fileController() {
-		if (_fileController == null) {
-			_fileController = new FileController(binaryFileRepository(), fileCollectionRepository());
-		}
-		return _fileController;
-	}
+    private FileController _fileController;
 
-	private UserController _userController;
+    public synchronized FileController fileController() {
+        if (_fileController == null) {
+            _fileController = new FileController(binaryFileRepository(), fileCollectionRepository());
+        }
+        return _fileController;
+    }
 
-	public UserController userController() {
-		if (_userController == null) {
-			_userController = new UserController(userRepository());
-		}
-		return _userController;
-	}
+    private UserController _userController;
 
-	private Logger _logger;
+    public synchronized UserController userController() {
+        if (_userController == null) {
+            _userController = new UserController(userRepository());
+        }
+        return _userController;
+    }
 
-	public Logger logger() {
-		if (_logger == null) {
-			_logger = new FileLogger("logs.txt", "errors.txt");
-		}
-		return _logger;
-	}
+    private Logger _logger;
 
-	public void loadAll() {
-		connection();
-		orm();
-		binaryFileRepository();
-		binaryCollectionRepository();
-		fileCollectionRepository();
-		themeRepository();
-		userController();
-		userRepository();
-		fileController();
-	}
+    public synchronized Logger logger() {
+        if (_logger == null) {
+            _logger = new FileLogger("logs.txt", "errors.txt");
+        }
+        return _logger;
+    }
+
+    public synchronized void loadAll() {
+        connection();
+        orm();
+        userRepository();
+        binaryFileRepository();
+        binaryCollectionRepository();
+        fileCollectionRepository();
+        themeRepository();
+        userController();
+        fileController();
+    }
 }

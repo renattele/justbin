@@ -18,7 +18,7 @@
         let oldCss = "";
 
         function editable() {
-            return "${owner}" === getUsername();
+            return "<c:out value="${owner}"/>" === getUsername();
         }
 
         function updateLocalTheme() {
@@ -54,7 +54,7 @@
         }
 
         function update(path, body = null) {
-            return fetchWithAuth("/t/${theme.id()}/" + path, {
+            return fetchWithAuth("/t/<c:out value="${theme.id()}"/>/" + path, {
                 method: "POST",
                 body: body
             })
@@ -87,7 +87,7 @@
 <body onload="onLoad()" onpageshow="updateLocalTheme()" class="centered-container" style="gap: 20px">
 <input id="name" placeholder="Edit me" value="<c:out value="${theme.name()}"/>" oninput="updateAll()">
 <c:if test="${not empty owner}">
-    <p style="margin-bottom: 40px; margin-top: -12px">by ${owner}</p>
+    <p style="margin-bottom: 40px; margin-top: -12px">by <c:out value="${owner}"/></p>
 </c:if>
 <input id="foreground" value="<c:out value="${theme.foregroundColor()}"/>" placeholder="foreground color"
        style="font-size: xx-large"

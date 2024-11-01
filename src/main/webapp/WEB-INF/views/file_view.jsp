@@ -20,7 +20,7 @@
                 const text = await response.text()
                 console.log(text);
                 const ids = text.split("\n")
-                selected = ids.some(value => value === "${fileId}")
+                selected = ids.some(value => value === "<c:out value="${fileId}"/>")
                 if (selected) {
                     html += `
                 <t:button style="width: 200px" onclick="toggleCollection('$id')" primary="true">$name</t:button>
@@ -35,7 +35,7 @@
         }
 
         function toggleCollection(id) {
-            fetch("/v/${fileId}/toggle_collection?q=" + id, {
+            fetch("/v/<c:out value="${fileId}"/>/toggle_collection?q=" + id, {
                 method: 'POST'
             }).then(response => {
                 fetchCollections()

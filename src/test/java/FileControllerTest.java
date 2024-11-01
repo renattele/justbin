@@ -24,9 +24,9 @@ public class FileControllerTest {
     }
 
     @Test
-    void upsertShouldWork() {
+    void insertShouldWork() {
         var stream = new ByteArrayInputStream("Hello".getBytes());
-        controller.upsert(new BinaryFile(null, "Binary Hello", Instant.now(), Instant.now(), false, "text/plain"), stream);
+        controller.insert(new BinaryFile(null, "Binary Hello", Instant.now(), "text/plain"), stream);
     }
 
     @Test

@@ -14,8 +14,9 @@ public class FileLogger implements Logger {
 	public FileLogger(String file, String errorFile) {
 		try {
 			System.setErr(System.out);
-			writer = new PrintWriter(new FileOutputStream(file, true));
-		} catch (IOException e) {
+			//writer = new PrintWriter(new FileOutputStream(file, true));
+			writer = new PrintWriter(System.out);
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

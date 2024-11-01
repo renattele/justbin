@@ -20,11 +20,11 @@ function cssFrom(background, foreground, css) {
 
 function rootCssFrom(background, foreground, css) {
     return `
+    ${css}
     :root {
         --background-color: ${background};
         --foreground-color: ${foreground};
     }
-    ${css}
     `;
 }
 

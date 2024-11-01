@@ -7,6 +7,9 @@ import jbin.domain.FileCollectionRepository;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 public class FileController {
@@ -20,14 +23,20 @@ public class FileController {
         this.dataDir = new File(System.getenv("HOME"), ".jbin");
 		if (!dataDir.exists())
 			dataDir.mkdirs();
+		new Timer().schedule(new TimerTask() {
+			@Override
+			public void run() {
+				deleteOrphans();
+			}
+		}, 0, 60 * 1000);
 	}
 
-	public UUID upsert(BinaryFile file, InputStream data) {
-		var id = repo.upsert(file);
+	public UUID insert(BinaryFile file, InputStream data) {
+		var id = repo.insert(file);
 		if (id == null)
 			return null;
 		var localFile = new File(dataDir, id.toString());
-		if (localFile.exists() && file.readonly())
+		if (localFile.exists())
 			return id;
 		try {
 			Files.copy(data, localFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -69,6 +78,7 @@ public class FileController {
 			var exists = !fileCollectionRepo.getAllByFileId(file.id()).isEmpty();
 			if (exists) continue;
 			fileCollectionRepo.deleteByFileId(file.id());
+			delete(file.id().toString());
 		}
 	}
 }

@@ -20,6 +20,10 @@ public class FileViewServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         var fileId = StringUtil.trimStart(req.getPathInfo(), '/');
         var file = DI.current().binaryFileRepository().findById(UUID.fromString(fileId));
+        if (file == null) {
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
         req.setAttribute("fileId", fileId);
         req.setAttribute("filename", file.name());
         req.setAttribute("contentType", file.contentType());

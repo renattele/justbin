@@ -47,9 +47,9 @@
         function onLoad() {
             let recent = JSON.parse(localStorage.getItem("recent_collections"));
             if (recent == null) recent = Array.of();
-            recent = recent.filter(c => c.id !== "${collectionID}");
+            recent = recent.filter(c => c.id !== "<c:out value="${collectionID}"/>");
             recent.push({
-                id: "${collectionID}",
+                id: "<c:out value="${collectionID}"/>",
                 name: document.getElementById("collection-name-input").value
             });
             localStorage.setItem("recent_collections", JSON.stringify(recent));
@@ -57,7 +57,7 @@
 
         function changeNameNow() {
             onLoad()
-            fetch("/c/${collectionID}/edit_name", {
+            fetch("/c/<c:out value="${collectionID}"/>/edit_name", {
                 method: "POST",
                 body: document.getElementById("collection-name-input").value
             })
@@ -81,7 +81,7 @@
         }
 
         function uploadFiles(formData) {
-            fetch("/c/${collectionID}/create_bin", {
+            fetch("/c/<c:out value="${collectionID}"/>/create_bin", {
                 method: "POST",
                 body: formData
             }).then(response => {

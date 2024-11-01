@@ -15,7 +15,6 @@ import jbin.util.DI;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -45,7 +44,6 @@ public class CollectionServlet extends HttpServlet {
 		if (split.length == 3 && split[2].equals("raw")) {
 			try (var writer = response.getWriter()) {
 				for (FileCollection fileCollection : fileIds) {
-					System.out.println(fileCollection);
 					writer.println(fileCollection.fileId().toString());
 				}
 				writer.flush();
@@ -98,15 +96,12 @@ public class CollectionServlet extends HttpServlet {
 				var fileCollection = DI.current().fileCollectionRepository();
 				for (Part part : parts) {
 					var type = part.getContentType();
-					var isTxt = type.equals("text/plain");
 					var file = new BinaryFile(
 							null,
 							part.getSubmittedFileName(),
 							Instant.now(),
-							Instant.now(),
-							!isTxt,
 							type);
-					var id = controller.upsert(file, part.getInputStream());
+					var id = controller.insert(file, part.getInputStream());
 					fileCollection.upsert(new FileCollection(null, id, UUID.fromString(collectionId)));
 				}
 			} catch (Exception e) {

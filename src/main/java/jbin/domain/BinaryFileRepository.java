@@ -12,20 +12,14 @@ import java.util.UUID;
             id uuid primary key not null ,
             name varchar(10000) not null ,
             creation_date timestamp not null ,
-            last_updated_date timestamp not null,
-            readonly boolean,
             content_type varchar(255)
         );
         """)
 public interface BinaryFileRepository {
     @Query("""
-            insert into binary_files (id, name, creation_date, last_updated_date, readonly, content_type) values (?, ?, ?, ?, ?, ?)
-            on conflict (id)
-            do update set
-            name = excluded.name,
-            last_updated_date = excluded.last_updated_date;
+            insert into binary_files (id, name, creation_date, content_type) values (?, ?, ?, ?)
             """)
-    UUID upsert(BinaryFile file);
+    UUID insert(BinaryFile file);
 
     @Query("delete from binary_files where id = ?")
     boolean delete(UUID id);
