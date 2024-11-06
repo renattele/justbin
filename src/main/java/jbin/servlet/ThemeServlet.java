@@ -5,7 +5,11 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jbin.domain.Theme;
+import jbin.data.UserController;
+import jbin.domain.ThemeEntity;
+import jbin.domain.ThemeRepository;
+import jbin.domain.UserRepository;
+import jbin.util.Base64Util;
 import jbin.util.DI;
 import jbin.util.StringUtil;
 
@@ -14,8 +18,16 @@ import java.util.Base64;
 
 @WebServlet(urlPatterns = "/themes/*")
 public class ThemeServlet extends HttpServlet {
+    private ThemeRepository themeRepository;
+    private UserController userController;
+    private UserRepository userRepository;
+
     @Override
     public void init() throws ServletException {
+        var di = (DI) getServletContext().getAttribute("di");
+        themeRepository = di.themeRepository();
+        userController = di.userController();
+        userRepository = di.userRepository();
         /*DI.getThemeRepository().upsert(new Theme(null, "Black", "#ffffff", "#000000", "", UUID.fromString("cd6aafea-7164-4653-9ecc-7414cd0c4eaa")));
         DI.getThemeRepository().upsert(new Theme(null, "White", "#000000", "#ffffff", "", UUID.fromString("cd6aafea-7164-4653-9ecc-7414cd0c4eaa")));
         DI.getThemeRepository().upsert(new Theme(null, "Purple Black", "#ccccff", "#000000", "", UUID.fromString("cd6aafea-7164-4653-9ecc-7414cd0c4eaa")));
@@ -27,8 +39,7 @@ public class ThemeServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        var repo = DI.current().themeRepository();
-        req.setAttribute("themes", repo.getAll());
+        req.setAttribute("themes", themeRepository.getAll());
         getServletContext().getRequestDispatcher("/WEB-INF/views/themes.jsp").forward(req, resp);
     }
 
@@ -36,19 +47,17 @@ public class ThemeServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         var info = StringUtil.trimStart(req.getPathInfo(), '/');
         var action = info.substring(info.lastIndexOf("/") + 1);
-        var user = new String(Base64.getDecoder().decode(req.getHeader("X-user")));
-        var password = new String(Base64.getDecoder().decode(req.getHeader("X-pass")));
+        var user = Base64Util.decode(req.getHeader("X-user"));
+        var password = Base64Util.decode(req.getHeader("X-pass"));
         if (action.equals("create")) {
-            if (DI.current().userController().areCredentialsCorrect(user, password)) {
-                var dbUser = DI.current().userRepository().findByName(user);
-                var id = DI.current().themeRepository().upsert(new Theme(
-                        null,
-                        "Edit me",
-                        "#ffffff",
-                        "#000000",
-                        "",
-                        dbUser.id()
-                ));
+            if (userController.areCredentialsCorrect(user, password)) {
+                var dbUser = userRepository.findByName(user);
+                var id = themeRepository.upsert(ThemeEntity.builder()
+                        .name("Edit me")
+                        .foregroundColor("#ffffff")
+                        .backgroundColor("#000000")
+                        .owner(dbUser.id())
+                        .build());
                 try (var writer = resp.getWriter()) {
                     writer.println(id);
                 }

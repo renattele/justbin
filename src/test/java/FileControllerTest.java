@@ -1,5 +1,5 @@
 import jbin.data.FileController;
-import jbin.domain.BinaryFile;
+import jbin.domain.BinaryFileEntity;
 import jbin.domain.BinaryFileRepository;
 import jbin.domain.FileCollectionRepository;
 import jbin.orm.Orm;
@@ -26,7 +26,7 @@ public class FileControllerTest {
     @Test
     void insertShouldWork() {
         var stream = new ByteArrayInputStream("Hello".getBytes());
-        controller.insert(new BinaryFile(null, "Binary Hello", Instant.now(), "text/plain"), stream);
+        controller.insert(new BinaryFileEntity(null, "Binary Hello", Instant.now(), "text/plain"), stream);
     }
 
     @Test

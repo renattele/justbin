@@ -5,21 +5,37 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jbin.domain.BinaryFile;
-import jbin.domain.FileCollection;
+import jbin.data.FileController;
+import jbin.domain.BinaryFileRepository;
+import jbin.domain.FileCollectionEntity;
+import jbin.domain.FileCollectionRepository;
 import jbin.util.DI;
 import jbin.util.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.UUID;
 
 @WebServlet(urlPatterns = "/v/*")
+@Slf4j
 public class FileViewServlet extends HttpServlet {
+    private BinaryFileRepository binaryFileRepository;
+    private FileCollectionRepository fileCollectionRepository;
+    private FileController fileController;
+
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        var di = (DI) getServletContext().getAttribute("di");
+        binaryFileRepository = di.binaryFileRepository();
+        fileController = di.fileController();
+        fileCollectionRepository = di.fileCollectionRepository();
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         var fileId = StringUtil.trimStart(req.getPathInfo(), '/');
-        var file = DI.current().binaryFileRepository().findById(UUID.fromString(fileId));
+        var file = binaryFileRepository.findById(UUID.fromString(fileId));
         if (file == null) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -29,7 +45,7 @@ public class FileViewServlet extends HttpServlet {
         req.setAttribute("contentType", file.contentType());
         req.setAttribute("content", "");
         if (file.contentType().startsWith("text")) {
-            var content = DI.current().fileController().get(file.id().toString());
+            var content = fileController.get(file.id().toString());
             var contentString = new String(content.readAllBytes());
             req.setAttribute("content", contentString);
             content.close();
@@ -46,18 +62,16 @@ public class FileViewServlet extends HttpServlet {
             var fileId = UUID.fromString(split[0]);
             if (split[1].equals("toggle_collection")) {
                 var collectionId = UUID.fromString(req.getParameter("q"));
-                System.out.println(collectionId);
-                var exists = DI.current().fileCollectionRepository().getAllByCollectionId(collectionId)
+                var exists = fileCollectionRepository.getAllByCollectionId(collectionId)
                         .stream().anyMatch(fileCollection -> fileCollection.fileId().equals(fileId));
-                System.out.println(exists);
                 if (exists) {
-                    DI.current().fileCollectionRepository().deleteByFileAndCollectionId(fileId, collectionId);
+                    fileCollectionRepository.deleteByFileAndCollectionId(fileId, collectionId);
                 } else {
-                    DI.current().fileCollectionRepository().upsert(new FileCollection(null, fileId, collectionId));
+                    fileCollectionRepository.upsert(FileCollectionEntity.builder().fileId(fileId).collectionId(collectionId).build());
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace(System.out);
+            log.error(e.toString());
         }
     }
 }

@@ -1,6 +1,6 @@
 package jbin.data;
 
-import jbin.domain.User;
+import jbin.domain.UserEntity;
 import jbin.domain.UserRepository;
 import jbin.util.HashUtil;
 
@@ -32,7 +32,7 @@ public class UserController {
             var hash = hash(password);
             var currentUser = userRepository.findByName(username);
             if (currentUser != null) return false;
-            return userRepository.upsert(new User(null, username, hash));
+            return userRepository.upsert(new UserEntity(null, username, hash));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             e.printStackTrace();
             return false;

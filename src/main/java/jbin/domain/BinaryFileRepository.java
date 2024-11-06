@@ -19,14 +19,14 @@ public interface BinaryFileRepository {
     @Query("""
             insert into binary_files (id, name, creation_date, content_type) values (?, ?, ?, ?)
             """)
-    UUID insert(BinaryFile file);
+    UUID insert(BinaryFileEntity file);
 
     @Query("delete from binary_files where id = ?")
     boolean delete(UUID id);
 
     @Query("select * from binary_files where id = ?")
-    BinaryFile findById(UUID id);
+    BinaryFileEntity findById(UUID id);
 
     @Query("select * from binary_files")
-    List<BinaryFile> getAll();
+    List<BinaryFileEntity> getAll();
 }

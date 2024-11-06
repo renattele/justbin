@@ -1,13 +1,12 @@
 package jbin.data;
 
-import jbin.domain.BinaryFile;
+import jbin.domain.BinaryFileEntity;
 import jbin.domain.BinaryFileRepository;
 import jbin.domain.FileCollectionRepository;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -31,7 +30,7 @@ public class FileController {
 		}, 0, 60 * 1000);
 	}
 
-	public UUID insert(BinaryFile file, InputStream data) {
+	public UUID insert(BinaryFileEntity file, InputStream data) {
 		var id = repo.insert(file);
 		if (id == null)
 			return null;
@@ -74,7 +73,7 @@ public class FileController {
 
 	public void deleteOrphans() {
 		var files = repo.getAll();
-		for (BinaryFile file : files) {
+		for (BinaryFileEntity file : files) {
 			var exists = !fileCollectionRepo.getAllByFileId(file.id()).isEmpty();
 			if (exists) continue;
 			fileCollectionRepo.deleteByFileId(file.id());

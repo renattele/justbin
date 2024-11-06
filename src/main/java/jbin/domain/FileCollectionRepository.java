@@ -23,16 +23,16 @@ public interface FileCollectionRepository {
             file_id = excluded.file_id,
             collection_id = excluded.collection_id
             """)
-    UUID upsert(FileCollection fileCollection);
+    UUID upsert(FileCollectionEntity fileCollection);
 
     @Query("select * from file_collection where id = ?")
-    FileCollection findById(UUID id);
+    FileCollectionEntity findById(UUID id);
 
     @Query("select * from file_collection where collection_id = ?")
-    List<FileCollection> getAllByCollectionId(UUID id);
+    List<FileCollectionEntity> getAllByCollectionId(UUID id);
 
     @Query("select * from file_collection where file_id = ?")
-    List<FileCollection> getAllByFileId(UUID id);
+    List<FileCollectionEntity> getAllByFileId(UUID id);
 
     @Query("delete from file_collection where id = ?")
     boolean deleteById(UUID id);

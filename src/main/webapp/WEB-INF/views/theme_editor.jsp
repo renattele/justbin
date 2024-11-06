@@ -1,5 +1,5 @@
 <jsp:useBean id="owner" scope="request" type="java.lang.String"/>
-<jsp:useBean id="theme" scope="request" type="jbin.domain.Theme"/>
+<jsp:useBean id="theme" scope="request" type="jbin.domain.ThemeEntity"/>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>

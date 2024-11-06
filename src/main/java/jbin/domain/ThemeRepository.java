@@ -27,13 +27,13 @@ public interface ThemeRepository {
             background_color = excluded.background_color,
             css = excluded.css
             """)
-    UUID upsert(Theme theme);
+    UUID upsert(ThemeEntity theme);
 
     @Query("select * from theme")
-    List<Theme> getAll();
+    List<ThemeEntity> getAll();
 
     @Query("select * from theme where id = ?")
-    Theme getById(UUID id);
+    ThemeEntity getById(UUID id);
 
     @Query("delete from theme where id = ?")
     boolean delete(UUID themeId);

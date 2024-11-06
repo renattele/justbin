@@ -19,10 +19,10 @@ public interface BinaryCollectionRepository {
             do update set
             name = excluded.name;
             """)
-    UUID upsert(BinaryCollection collection);
+    UUID upsert(BinaryCollectionEntity collection);
 
     @Query("select * from binary_collection where id = ?")
-    BinaryCollection findById(UUID id);
+    BinaryCollectionEntity findById(UUID id);
 
     @Query("delete from binary_collection where id = ?")
     boolean delete(UUID id);

@@ -2,10 +2,12 @@ package jbin.domain;
 
 import jbin.orm.DbName;
 import jbin.orm.Id;
+import lombok.Builder;
 
 import java.util.UUID;
 
-public record User(
+@Builder
+public record UserEntity(
         @Id UUID id,
         String username,
         @DbName("password_hash") String passwordHash

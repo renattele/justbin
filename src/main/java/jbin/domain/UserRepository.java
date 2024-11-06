@@ -20,13 +20,13 @@ public interface UserRepository {
             do update set
             password_hash = excluded.password_hash;
             """)
-    boolean upsert(User user);
+    boolean upsert(UserEntity user);
 
     @Query("select * from users where username = ?")
-    User findByName(String name);
+    UserEntity findByName(String name);
 
     @Query("select * from users where id = ?")
-    User findById(UUID id);
+    UserEntity findById(UUID id);
 
     @Query("delete from users where username = ?")
     boolean deleteByName(String name);

@@ -3,8 +3,10 @@ package jbin.util;
 import jbin.data.*;
 import jbin.domain.*;
 import jbin.orm.Orm;
+import lombok.experimental.UtilityClass;
 
 import java.sql.Connection;
+import java.util.Properties;
 
 class DICache {
     static DI _current = null;
@@ -25,12 +27,21 @@ public interface DI {
                     return _connectionController;
                 }
 
+                private synchronized PropertiesController propertiesController() {
+                    return new PropertiesController();
+                }
+
+                private synchronized Properties appProperties() {
+                    return propertiesController().load("app.properties");
+                }
+
                 public synchronized Connection connection() {
                     if (_connection == null) {
-                        _connection = connectionController().get("jdbc:postgresql://localhost:5432/",
-                                "jbin",
-                                "postgres",
-                                "12345678");
+                        var properties =  appProperties();
+                        _connection = connectionController().get(properties.get("DB_URL").toString(),
+                                properties.get("DB_NAME").toString(),
+                                properties.get("DB_USER").toString(),
+                                properties.get("DB_PASS").toString());
                     }
                     return _connection;
                 }
@@ -107,15 +118,6 @@ public interface DI {
                     return _userController;
                 }
 
-                private Logger _logger;
-
-                public synchronized Logger logger() {
-                    if (_logger == null) {
-                        _logger = new FileLogger("logs.txt", "errors.txt");
-                    }
-                    return _logger;
-                }
-
                 public synchronized void loadAll() {
                     connection();
                     orm();
@@ -132,15 +134,23 @@ public interface DI {
         return DICache._current;
     }
 
-    Logger logger();
     void loadAll();
+
     UserController userController();
+
     FileController fileController();
+
     UserRepository userRepository();
+
     ThemeRepository themeRepository();
+
     FileCollectionRepository fileCollectionRepository();
+
     BinaryFileRepository binaryFileRepository();
+
     BinaryCollectionRepository binaryCollectionRepository();
+
     Connection connection();
+
     Orm orm();
 }
