@@ -34,6 +34,7 @@ public class LoginServlet extends HttpServlet {
             var username = Base64Util.decode(reader.readLine());
             var password = Base64Util.decode(reader.readLine());
             if (userController.areCredentialsCorrect(username, password)) {
+                req.getSession().setAttribute("user", username);
                 resp.setStatus(HttpServletResponse.SC_OK);
             } else {
                 resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

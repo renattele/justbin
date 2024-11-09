@@ -34,6 +34,7 @@ public class SignupServlet extends HttpServlet {
             var password = Base64Util.decode(reader.readLine());
             var registered = userController.register(username, password);
             if (registered) {
+                req.getSession().setAttribute("user", username);
                 resp.setStatus(HttpServletResponse.SC_OK);
             } else {
                 resp.setStatus(HttpServletResponse.SC_CONFLICT);

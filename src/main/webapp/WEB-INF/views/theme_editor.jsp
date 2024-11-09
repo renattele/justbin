@@ -1,5 +1,6 @@
 <jsp:useBean id="owner" scope="request" type="java.lang.String"/>
 <jsp:useBean id="theme" scope="request" type="jbin.domain.ThemeEntity"/>
+<jsp:useBean id="user" scope="request" type="java.lang.String"/>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
@@ -18,7 +19,7 @@
         let oldCss = "";
 
         function editable() {
-            return "<c:out value="${owner}"/>" === getUsername();
+            return "<c:out value="${user}"/>" === "<c:out value="${owner}"/>";
         }
 
         function updateLocalTheme() {
@@ -53,9 +54,9 @@
             }
         }
 
-        function update(path, body = null) {
-            return fetchWithAuth("/t/<c:out value="${theme.id()}"/>/" + path, {
-                method: "POST",
+        function update(body = null) {
+            return fetch("/t/<c:out value="${theme.id()}"/>/", {
+                method: 'PUT',
                 body: body
             })
         }
@@ -68,7 +69,7 @@
         }
 
         function deleteTheme() {
-            return update("delete").then(response => {
+            return fetch("/t/<c:out value="${theme.id()}"/>/", {method: 'DELETE'}).then(response => {
                 if (response.status === 200) {
                     navigateBack();
                 }
@@ -80,7 +81,7 @@
             const background = document.getElementById("background").value
             const foreground = document.getElementById("foreground").value
             const css = document.getElementById("css").value
-            update("edit", base64(name) + "\n" + base64(background) + "\n" + base64(foreground) + "\n" + base64(css))
+            update(base64(name) + "\n" + base64(background) + "\n" + base64(foreground) + "\n" + base64(css))
         })
     </script>
 </t:header>

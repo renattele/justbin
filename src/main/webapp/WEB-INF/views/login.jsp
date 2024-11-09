@@ -16,7 +16,6 @@
             if (response.status === 401) {
                 status.innerHTML = "Incorrect";
             } else if (response.status === 200) {
-                loginPersistent(username, password);
                 navigateBack();
             } else {
                 status.innerHTML = "Error";

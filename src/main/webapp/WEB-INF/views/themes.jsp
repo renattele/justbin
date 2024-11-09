@@ -1,4 +1,6 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<jsp:useBean id="themes" scope="request" type="java.util.List"/>
+<jsp:useBean id="user" scope="request" type="java.lang.String"/>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
 <html lang="en">
@@ -8,29 +10,8 @@
             setTheme(cssFrom(background, foreground, css))
         }
 
-        function load() {
-            const options = document.getElementById("loginOptions")
-            if (!isLoggedIn()) {
-                document.getElementById("new-theme-button").style.display = "none";
-                options.innerHTML = `
-                <a style="flex: 1" href="<c:url value="/login"/>">
-                    <p>log in</p>
-                </a>
-                <a style="flex: 1;" href="<c:url value="/signup"/>">
-                    <p>sign up</p>
-                </a>
-                `;
-            } else {
-                options.innerHTML = `
-                <div style="flex: 1; cursor: pointer" onclick="logout(); load()">
-                    <p>log out</p>
-                </a>
-                `
-            }
-        }
-
         function createTheme() {
-            fetchWithAuth("themes/create", {
+            fetch("themes/create", {
                 method: "POST"
             }).then(response => {
                 if (response.status !== 200) {
@@ -43,19 +24,37 @@
                 }
             })
         }
+
+        async function logout() {
+            await fetch("<c:url value="/logout"/>", { method: 'POST' })
+            reload()
+        }
     </script>
 </t:header>
-<body onpageshow="load()" class="centered-container-scrollable">
+<body class="centered-container-scrollable">
 <div class="centered-container-scrollable" style="width: 100%">
     <div style="display: flex; flex-direction: column; margin-bottom: 50px">
         <h1 style="text-align: center; flex: 1; margin: 0">Themes.</h1>
         <div id="loginOptions" style="flex: 1; display: flex">
-
+            <c:if test="${empty user}">
+                <a style="flex: 1" href="<c:url value="/login"/>">
+                    <p>log in</p>
+                </a>
+                <a style="flex: 1;" href="<c:url value="/signup"/>">
+                    <p>sign up</p>
+                </a>
+            </c:if>
+            <c:if test="${not empty user}">
+                <div style="flex: 1; cursor: pointer" onclick="logout()">
+                    <p>log out</p>
+                </div>
+            </c:if>
         </div>
     </div>
     <div id="content-container" class="content-container">
-        <t:button id="new-theme-button" onclick="createTheme()" primary="true">New theme</t:button>
-        <jsp:useBean id="themes" scope="request" type="java.util.List"/>
+        <c:if test="${not empty user}">
+            <t:button id="new-theme-button" onclick="createTheme()" primary="true">New theme</t:button>
+        </c:if>
         <c:forEach items="${themes}" var="theme" varStatus="loop">
             <style>
                 #theme-${loop.index} {

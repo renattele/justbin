@@ -50,38 +50,6 @@ function unbase64(input) {
     return new TextDecoder().decode(base64ToBytes(input))
 }
 
-/**
- * @param url
- * @param options {RequestInit}
- * @returns {Promise<Response>}
- */
-function fetchWithAuth(url, options = {}) {
-    const defaultHeaders = {
-        'X-user': base64(localStorage.getItem("username")),
-        'X-pass': base64(localStorage.getItem("password"))
-    };
-    const mergedOptions = {...options, headers: {...defaultHeaders, ...options.headers}};
-    return fetch(url, mergedOptions);
-}
-
-function loginPersistent(username, password) {
-    localStorage.setItem("username", username);
-    localStorage.setItem("password", password);
-}
-
-function logout() {
-    localStorage.removeItem("username");
-    localStorage.removeItem("password");
-}
-
-function getUsername() {
-    return localStorage.getItem("username")
-}
-
-function isLoggedIn() {
-    return localStorage.getItem("username") != null && localStorage.getItem("password") != null;
-}
-
 function navigateBack() {
     if (history.length === 1) {
         location.href = "/";

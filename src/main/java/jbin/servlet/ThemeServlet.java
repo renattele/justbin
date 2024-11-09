@@ -15,6 +15,7 @@ import jbin.util.StringUtil;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Objects;
 
 @WebServlet(urlPatterns = "/themes/*")
 public class ThemeServlet extends HttpServlet {
@@ -40,6 +41,7 @@ public class ThemeServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setAttribute("themes", themeRepository.getAll());
+        req.setAttribute("user", Objects.toString(req.getSession().getAttribute("user"), ""));
         getServletContext().getRequestDispatcher("/WEB-INF/views/themes.jsp").forward(req, resp);
     }
 
@@ -47,22 +49,20 @@ public class ThemeServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         var info = StringUtil.trimStart(req.getPathInfo(), '/');
         var action = info.substring(info.lastIndexOf("/") + 1);
-        var user = Base64Util.decode(req.getHeader("X-user"));
-        var password = Base64Util.decode(req.getHeader("X-pass"));
+        var user = (String) req.getSession().getAttribute("user");
+        if (user == null) {
+            resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        }
         if (action.equals("create")) {
-            if (userController.areCredentialsCorrect(user, password)) {
-                var dbUser = userRepository.findByName(user);
-                var id = themeRepository.upsert(ThemeEntity.builder()
-                        .name("Edit me")
-                        .foregroundColor("#ffffff")
-                        .backgroundColor("#000000")
-                        .owner(dbUser.id())
-                        .build());
-                try (var writer = resp.getWriter()) {
-                    writer.println(id);
-                }
-            } else {
-                resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            var dbUser = userRepository.findByName(user);
+            var id = themeRepository.upsert(ThemeEntity.builder()
+                    .name("Edit me")
+                    .foregroundColor("#ffffff")
+                    .backgroundColor("#000000")
+                    .owner(dbUser.id())
+                    .build());
+            try (var writer = resp.getWriter()) {
+                writer.println(id);
             }
         }
     }
