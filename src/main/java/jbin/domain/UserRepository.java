@@ -3,6 +3,7 @@ package jbin.domain;
 import jbin.orm.Query;
 import jbin.orm.Table;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Table(name = "users", createTable = """
@@ -23,10 +24,10 @@ public interface UserRepository {
     boolean upsert(UserEntity user);
 
     @Query("select * from users where username = ?")
-    UserEntity findByName(String name);
+    Optional<UserEntity> findByName(String name);
 
     @Query("select * from users where id = ?")
-    UserEntity findById(UUID id);
+    Optional<UserEntity> findById(UUID id);
 
     @Query("delete from users where username = ?")
     boolean deleteByName(String name);

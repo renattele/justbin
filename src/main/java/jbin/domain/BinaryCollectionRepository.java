@@ -3,6 +3,7 @@ package jbin.domain;
 import jbin.orm.Query;
 import jbin.orm.Table;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Table(name = "binary_collection", createTable = """
@@ -19,10 +20,10 @@ public interface BinaryCollectionRepository {
             do update set
             name = excluded.name;
             """)
-    UUID upsert(BinaryCollectionEntity collection);
+    Optional<UUID> upsert(BinaryCollectionEntity collection);
 
     @Query("select * from binary_collection where id = ?")
-    BinaryCollectionEntity findById(UUID id);
+    Optional<BinaryCollectionEntity> findById(UUID id);
 
     @Query("delete from binary_collection where id = ?")
     boolean delete(UUID id);

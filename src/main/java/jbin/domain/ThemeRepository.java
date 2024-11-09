@@ -4,6 +4,7 @@ import jbin.orm.Query;
 import jbin.orm.Table;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Table(name = "theme", createTable = """
@@ -27,13 +28,13 @@ public interface ThemeRepository {
             background_color = excluded.background_color,
             css = excluded.css
             """)
-    UUID upsert(ThemeEntity theme);
+    Optional<UUID> upsert(ThemeEntity theme);
 
     @Query("select * from theme")
     List<ThemeEntity> getAll();
 
     @Query("select * from theme where id = ?")
-    ThemeEntity getById(UUID id);
+    Optional<ThemeEntity> getById(UUID id);
 
     @Query("delete from theme where id = ?")
     boolean delete(UUID themeId);

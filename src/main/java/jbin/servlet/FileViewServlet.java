@@ -36,16 +36,16 @@ public class FileViewServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         var fileId = StringUtil.trimStart(req.getPathInfo(), '/');
         var file = binaryFileRepository.findById(UUID.fromString(fileId));
-        if (file == null) {
+        if (file.isEmpty()) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
         req.setAttribute("fileId", fileId);
-        req.setAttribute("filename", file.name());
-        req.setAttribute("contentType", file.contentType());
+        req.setAttribute("filename", file.get().name());
+        req.setAttribute("contentType", file.get().contentType());
         req.setAttribute("content", "");
-        if (file.contentType().startsWith("text")) {
-            var content = fileController.get(file.id().toString());
+        if (file.get().contentType().startsWith("text")) {
+            var content = fileController.get(file.get().id().toString());
             var contentString = new String(content.readAllBytes());
             req.setAttribute("content", contentString);
             content.close();

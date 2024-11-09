@@ -19,8 +19,7 @@ public class UserController {
         try {
             var hash = hash(password);
             var dbUser = userRepository.findByName(username);
-            if (dbUser == null) return false;
-            return Objects.equals(dbUser.passwordHash(), hash);
+            return dbUser.filter(userEntity -> Objects.equals(userEntity.passwordHash(), hash)).isPresent();
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             e.printStackTrace();
             return false;
@@ -31,7 +30,7 @@ public class UserController {
         try {
             var hash = hash(password);
             var currentUser = userRepository.findByName(username);
-            if (currentUser != null) return false;
+            if (currentUser.isEmpty()) return false;
             return userRepository.upsert(new UserEntity(null, username, hash));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             e.printStackTrace();

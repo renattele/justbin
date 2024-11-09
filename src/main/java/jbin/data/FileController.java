@@ -7,6 +7,7 @@ import jbin.domain.FileCollectionRepository;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -30,10 +31,9 @@ public class FileController {
 		}, 0, 60 * 1000);
 	}
 
-	public UUID insert(BinaryFileEntity file, InputStream data) {
+	public Optional<UUID> insert(BinaryFileEntity file, InputStream data) {
 		var id = repo.insert(file);
-		if (id == null)
-			return null;
+		if (id.isEmpty()) return Optional.empty();
 		var localFile = new File(dataDir, id.toString());
 		if (localFile.exists())
 			return id;
@@ -41,9 +41,8 @@ public class FileController {
 			Files.copy(data, localFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 			return id;
 		} catch (IOException e) {
-			e.printStackTrace();
 			e.printStackTrace(System.out);
-			return null;
+			return Optional.empty();
 		}
 	}
 

@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jbin.domain.ThemeEntity;
 import jbin.domain.ThemeRepository;
+import jbin.domain.UserEntity;
 import jbin.domain.UserRepository;
 import jbin.util.Base64Util;
 import jbin.util.DI;
@@ -15,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @WebServlet("/t/*")
@@ -35,11 +37,15 @@ public class ThemeEditorServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         var id = req.getPathInfo().replace("/", "");
         var theme = themeRepository.getById(UUID.fromString(id));
+        if (theme.isEmpty()) {
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
         req.setAttribute("owner", "");
         req.setAttribute("user", Objects.toString(req.getSession().getAttribute("user"), ""));
-        if (theme.owner() != null) {
-            var owner = userRepository.findById(theme.owner());
-            req.setAttribute("owner", owner != null ? owner.username() : "");
+        if (theme.get().owner() != null) {
+            var owner = userRepository.findById(theme.get().owner());
+            req.setAttribute("owner", owner.map(UserEntity::username).orElse(null));
         }
         req.setAttribute("theme", theme);
         getServletContext().getRequestDispatcher("/WEB-INF/views/theme_editor.jsp").forward(req, resp);
@@ -48,19 +54,27 @@ public class ThemeEditorServlet extends HttpServlet {
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         var theme = getThemeFromRequest(req);
-        if (isAllowedToEdit(theme, req)) {
-            themeRepository.delete(theme.id());
+        if (theme.isEmpty()) {
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        if (isAllowedToEdit(theme.get(), req)) {
+            themeRepository.delete(theme.get().id());
         }
     }
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         var oldTheme = getThemeFromRequest(req);
-        if (isAllowedToEdit(oldTheme, req)) {
-            var name = oldTheme.name();
-            var background = oldTheme.backgroundColor();
-            var foreground = oldTheme.foregroundColor();
-            var css = oldTheme.css();
+        if (oldTheme.isEmpty()) {
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        if (isAllowedToEdit(oldTheme.get(), req)) {
+            var name = oldTheme.get().name();
+            var background = oldTheme.get().backgroundColor();
+            var foreground = oldTheme.get().foregroundColor();
+            var css = oldTheme.get().css();
 
             try (var reader = req.getReader()) {
                 name = Base64Util.decode(reader.readLine());
@@ -72,12 +86,12 @@ public class ThemeEditorServlet extends HttpServlet {
                 css = "";
             }
             var newTheme = ThemeEntity.builder()
-                    .id(oldTheme.id())
+                    .id(oldTheme.get().id())
                     .name(name)
                     .foregroundColor(foreground)
                     .backgroundColor(background)
                     .css(css)
-                    .owner(oldTheme.owner())
+                    .owner(oldTheme.get().owner())
                     .build();
             themeRepository.upsert(newTheme);
         }
@@ -86,10 +100,10 @@ public class ThemeEditorServlet extends HttpServlet {
     private boolean isAllowedToEdit(ThemeEntity theme, HttpServletRequest req) {
         var user = (String) req.getSession().getAttribute("user");
         var dbUser = userRepository.findByName(user);
-        return user != null && dbUser.id().equals(theme.owner());
+        return user != null && dbUser.isPresent() && dbUser.get().id().equals(theme.owner());
     }
 
-    private ThemeEntity getThemeFromRequest(HttpServletRequest req) {
+    private Optional<ThemeEntity> getThemeFromRequest(HttpServletRequest req) {
         var path = StringUtil.trimStart(req.getPathInfo(), '/');
         var id = path.substring(0, path.indexOf("/"));
         return themeRepository.getById(UUID.fromString(id));

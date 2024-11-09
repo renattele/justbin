@@ -30,8 +30,12 @@ public class FileDownloadServlet extends HttpServlet {
         var path = StringUtil.trimStart(req.getPathInfo(), '/');
         var id = path.substring(0, path.indexOf("/"));
         var file = binaryFileRepository.findById(UUID.fromString(id));
-        resp.setContentType(file.contentType());
-        var stream = fileController.get(file.id().toString());
+        if (file.isEmpty()) {
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        resp.setContentType(file.get().contentType());
+        var stream = fileController.get(file.get().id().toString());
         var out = resp.getOutputStream();
         stream.transferTo(out);
         stream.close();

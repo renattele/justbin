@@ -4,6 +4,7 @@ import jbin.orm.Query;
 import jbin.orm.Table;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Table(name = "file_collection", createTable = """
@@ -23,10 +24,10 @@ public interface FileCollectionRepository {
             file_id = excluded.file_id,
             collection_id = excluded.collection_id
             """)
-    UUID upsert(FileCollectionEntity fileCollection);
+    Optional<UUID> upsert(FileCollectionEntity fileCollection);
 
     @Query("select * from file_collection where id = ?")
-    FileCollectionEntity findById(UUID id);
+    Optional<FileCollectionEntity> findById(UUID id);
 
     @Query("select * from file_collection where collection_id = ?")
     List<FileCollectionEntity> getAllByCollectionId(UUID id);

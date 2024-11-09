@@ -55,6 +55,7 @@ public class CollectionServlet extends HttpServlet {
             return;
         }
         var fileIds = getFileIds(collectionUUID);
+        System.out.println(fileIds);
         if (fileIds == null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -64,15 +65,16 @@ public class CollectionServlet extends HttpServlet {
             return;
         }
         var collection = binaryCollectionRepository.findById(collectionUUID);
-        if (collection == null) {
+        System.out.println(collection);
+        if (collection.isEmpty()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
         var files = fileIds.stream()
-                .map(fileCollection -> binaryFileRepository.findById(fileCollection.fileId())).toList();
+                .map(fileCollection -> binaryFileRepository.findById(fileCollection.fileId()).orElse(null)).toList();
         request.setAttribute("files", files);
-        request.setAttribute("collectionName", collection.name());
-        request.setAttribute("collectionID", collection.id().toString());
+        request.setAttribute("collectionName", collection.get().name());
+        request.setAttribute("collectionID", collection.get().id().toString());
         getServletConfig().getServletContext().getRequestDispatcher("/WEB-INF/views/collection.jsp").forward(request,
                 response);
     }
@@ -88,7 +90,7 @@ public class CollectionServlet extends HttpServlet {
 
     private List<FileCollectionEntity> getFileIds(UUID id) {
         var collection = binaryCollectionRepository.findById(id);
-        if (collection == null) {
+        if (collection.isEmpty()) {
             return null;
         }
         return fileCollectionRepository.getAllByCollectionId(id);
@@ -118,6 +120,10 @@ public class CollectionServlet extends HttpServlet {
                         .contentType(type)
                         .build();
                 var id = fileController.insert(file, part.getInputStream());
+                if (id.isEmpty()) {
+                    log.info("Cannot create file");
+                    return;
+                }
                 UUID collectionUUID;
                 try {
                     collectionUUID = UUID.fromString(collectionId);
@@ -126,7 +132,7 @@ public class CollectionServlet extends HttpServlet {
                     return;
                 }
                 fileCollectionRepository.upsert(FileCollectionEntity.builder()
-                        .fileId(id)
+                        .fileId(id.get())
                         .collectionId(collectionUUID)
                         .build());
             }
@@ -156,9 +162,7 @@ public class CollectionServlet extends HttpServlet {
     private void createCollection(HttpServletResponse resp) throws IOException {
         var id = binaryCollectionRepository.upsert(BinaryCollectionEntity.builder()
                 .name("Edit me")
-                .build());
-        if (id == null)
-            return;
+                .build()).orElse(null);
         var writer = new PrintWriter(resp.getWriter());
         writer.println(id);
         resp.setContentType("text/plain");

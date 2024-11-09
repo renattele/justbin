@@ -55,14 +55,20 @@ public class ThemeServlet extends HttpServlet {
         }
         if (action.equals("create")) {
             var dbUser = userRepository.findByName(user);
+            if (dbUser.isEmpty()) {
+                resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
             var id = themeRepository.upsert(ThemeEntity.builder()
                     .name("Edit me")
                     .foregroundColor("#ffffff")
                     .backgroundColor("#000000")
-                    .owner(dbUser.id())
+                    .owner(dbUser.get().id())
                     .build());
-            try (var writer = resp.getWriter()) {
-                writer.println(id);
+            if (id.isPresent()) {
+                try (var writer = resp.getWriter()) {
+                    writer.println(id);
+                }
             }
         }
     }

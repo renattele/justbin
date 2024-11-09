@@ -4,6 +4,7 @@ import jbin.orm.Query;
 import jbin.orm.Table;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Table(name = "binary_files", createTable = """
@@ -19,13 +20,13 @@ public interface BinaryFileRepository {
     @Query("""
             insert into binary_files (id, name, creation_date, content_type) values (?, ?, ?, ?)
             """)
-    UUID insert(BinaryFileEntity file);
+    Optional<UUID> insert(BinaryFileEntity file);
 
     @Query("delete from binary_files where id = ?")
     boolean delete(UUID id);
 
     @Query("select * from binary_files where id = ?")
-    BinaryFileEntity findById(UUID id);
+    Optional<BinaryFileEntity> findById(UUID id);
 
     @Query("select * from binary_files")
     List<BinaryFileEntity> getAll();
