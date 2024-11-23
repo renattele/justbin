@@ -54,13 +54,6 @@
             }
         }
 
-        function update(body = null) {
-            return fetch("/t/<c:out value="${theme.id()}"/>/", {
-                method: 'PUT',
-                body: body
-            })
-        }
-
         function applyTheme() {
             setTheme(cssFrom(document.getElementById("background").value,
                 document.getElementById("foreground").value,
@@ -77,37 +70,39 @@
         }
 
         const updateAll = debounce(1000, () => {
-            const name = document.getElementById("name").value
-            const background = document.getElementById("background").value
-            const foreground = document.getElementById("foreground").value
-            const css = document.getElementById("css").value
-            update(base64(name) + "\n" + base64(background) + "\n" + base64(foreground) + "\n" + base64(css))
+            fetch("/t/<c:out value="${theme.id()}"/>", {
+                method: 'POST',
+                body: new URLSearchParams(new FormData(document.getElementById("theme-form")))
+            })
         })
     </script>
 </t:header>
 <body onload="onLoad()" onpageshow="updateLocalTheme()" class="centered-container" style="gap: 20px">
-<input id="name" placeholder="Edit me" value="<c:out value="${theme.name()}"/>" oninput="updateAll()">
-<c:if test="${not empty owner}">
-    <p style="margin-bottom: 40px; margin-top: -12px">by <c:out value="${owner}"/></p>
-</c:if>
-<input id="foreground" value="<c:out value="${theme.foregroundColor()}"/>" placeholder="foreground color"
-       style="font-size: xx-large"
-       oninput="updateLocalTheme(); updateAll()" autocomplete="off">
-<input id="background" value="<c:out value="${theme.backgroundColor()}"/>" placeholder="background color"
-       style="font-size: xx-large"
-       oninput="updateLocalTheme(); updateAll()" autocomplete="off">
-<textarea
-        id="css"
-        placeholder="css"
-        style="font-size: xx-large; text-align: center; height: auto"
-        oninput="updateTextArea(this); updateLocalTheme(); updateAll()"
-        autocomplete="off"><c:out
-        value="${theme.css()}"/></textarea>
-<script>
-    updateTextArea(document.getElementById("css"))
-</script>
-<div id="actions" style="display: flex; flex-direction: row; gap: 20px">
-    <t:button onclick="applyTheme()" style="width: 200px" primary="true">Apply</t:button>
-</div>
+<form id="theme-form" style="all: inherit">
+    <input name="name" id="name" placeholder="Edit me" value="<c:out value="${theme.name()}"/>" oninput="updateAll()">
+    <c:if test="${not empty owner}">
+        <p style="margin-bottom: 40px; margin-top: -12px">by <c:out value="${owner}"/></p>
+    </c:if>
+    <input name="foreground" id="foreground" value="<c:out value="${theme.foregroundColor()}"/>" placeholder="foreground color"
+           style="font-size: xx-large"
+           oninput="updateLocalTheme(); updateAll()" autocomplete="off">
+    <input name="background" id="background" value="<c:out value="${theme.backgroundColor()}"/>" placeholder="background color"
+           style="font-size: xx-large"
+           oninput="updateLocalTheme(); updateAll()" autocomplete="off">
+    <textarea
+            name="css"
+            id="css"
+            placeholder="css"
+            style="font-size: xx-large; text-align: center; height: auto"
+            oninput="updateTextArea(this); updateLocalTheme(); updateAll()"
+            autocomplete="off"><c:out
+            value="${theme.css()}"/></textarea>
+    <script>
+        updateTextArea(document.getElementById("css"))
+    </script>
+    <div id="actions" style="display: flex; flex-direction: row; gap: 20px">
+        <t:button onclick="applyTheme()" style="width: 200px" primary="true">Apply</t:button>
+    </div>
+</form>
 </body>
 </html>

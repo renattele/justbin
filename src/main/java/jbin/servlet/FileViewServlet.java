@@ -2,14 +2,13 @@ package jbin.servlet;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jbin.data.FileController;
 import jbin.domain.BinaryFileRepository;
 import jbin.domain.FileCollectionEntity;
 import jbin.domain.FileCollectionRepository;
-import jbin.util.DI;
+import jbin.util.ProvidedServlet;
 import jbin.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,7 +17,7 @@ import java.util.UUID;
 
 @WebServlet(urlPatterns = "/v/*")
 @Slf4j
-public class FileViewServlet extends HttpServlet {
+public class FileViewServlet extends ProvidedServlet {
     private BinaryFileRepository binaryFileRepository;
     private FileCollectionRepository fileCollectionRepository;
     private FileController fileController;
@@ -26,10 +25,9 @@ public class FileViewServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         super.init();
-        var di = (DI) getServletContext().getAttribute("di");
-        binaryFileRepository = di.binaryFileRepository();
-        fileController = di.fileController();
-        fileCollectionRepository = di.fileCollectionRepository();
+        binaryFileRepository = inject(BinaryFileRepository.class);
+        fileController = inject(FileController.class);
+        fileCollectionRepository = inject(FileCollectionRepository.class);
     }
 
     @Override

@@ -1,17 +1,18 @@
 package jbin.util;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
 public class SqlUtil {
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public SqlUtil(Connection connection) {
-        this.connection = connection;
+    public SqlUtil(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public boolean tableExists(String tableName) {
-        try {
+        try(var connection = dataSource.getConnection()) {
             var dbm = connection.getMetaData();
             var tables = dbm.getTables(null, null, tableName, null);
             return tables.next();

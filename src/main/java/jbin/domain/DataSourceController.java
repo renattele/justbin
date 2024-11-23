@@ -1,5 +1,5 @@
 package jbin.domain;
 
-public interface ConnectionController<T> {
+public interface DataSourceController<T> {
     T get(String url, String dbName, String username, String password);
 }

@@ -1,5 +1,7 @@
 package jbin.data;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jbin.domain.UserEntity;
 import jbin.domain.UserRepository;
 import jbin.util.HashUtil;
@@ -16,35 +18,20 @@ public class UserController {
     }
 
     public boolean areCredentialsCorrect(String username, String password) {
-        try {
-            var hash = hash(password);
-            var dbUser = userRepository.findByName(username);
-            return dbUser.filter(userEntity -> Objects.equals(userEntity.passwordHash(), hash)).isPresent();
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            e.printStackTrace();
-            return false;
-        }
+        var dbUser = userRepository.findByName(username);
+        return dbUser.filter(userEntity -> HashUtil.verifyPassword(password, userEntity.passwordHash())).isPresent();
     }
 
     public boolean register(String username, String password) {
-        try {
-            var hash = hash(password);
-            var currentUser = userRepository.findByName(username);
-            if (currentUser.isEmpty()) return false;
-            return userRepository.upsert(new UserEntity(null, username, hash));
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            e.printStackTrace();
-            return false;
-        }
+        var hash = HashUtil.hashPassword(password);
+        var currentUser = userRepository.findByName(username);
+        if (currentUser.isPresent()) return false;
+        return userRepository.upsert(new UserEntity(null, username, hash));
     }
 
     public boolean delete(String username, String password) {
         if (areCredentialsCorrect(username, password)) {
             return userRepository.deleteByName(username);
         } else return false;
-    }
-
-    private String hash(String password) throws InvalidKeySpecException, NoSuchAlgorithmException {
-        return HashUtil.pbkdf2(password);
     }
 }

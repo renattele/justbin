@@ -2,25 +2,23 @@ package jbin.servlet;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jbin.data.UserController;
 import jbin.util.Base64Util;
-import jbin.util.DI;
+import jbin.util.ProvidedServlet;
+import jbin.util.SessionKeys;
 
 import java.io.IOException;
-import java.util.Base64;
 
 @WebServlet(urlPatterns = "/login")
-public class LoginServlet extends HttpServlet {
+public class LoginServlet extends ProvidedServlet {
     private UserController userController;
 
     @Override
     public void init() throws ServletException {
         super.init();
-        var di = (DI) getServletContext().getAttribute("di");
-        userController = di.userController();
+        userController = inject(UserController.class);
     }
 
     @Override
@@ -30,17 +28,13 @@ public class LoginServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        try (var reader = req.getReader()) {
-            var username = Base64Util.decode(reader.readLine());
-            var password = Base64Util.decode(reader.readLine());
-            if (userController.areCredentialsCorrect(username, password)) {
-                req.getSession().setAttribute("user", username);
-                resp.setStatus(HttpServletResponse.SC_OK);
-            } else {
-                resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        var username = req.getParameter("username");
+        var password = req.getParameter("password");
+        if (userController.areCredentialsCorrect(username, password)) {
+            req.getSession().setAttribute(SessionKeys.USER, username);
+            resp.setStatus(HttpServletResponse.SC_OK);
+        } else {
+            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
     }
 }

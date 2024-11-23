@@ -11,7 +11,7 @@
         }
 
         function createTheme() {
-            fetch("themes/create", {
+            fetch("<c:url value="/themes/"/>", {
                 method: "POST"
             }).then(response => {
                 if (response.status !== 200) {

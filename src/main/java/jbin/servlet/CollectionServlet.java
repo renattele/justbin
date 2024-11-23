@@ -3,13 +3,13 @@ package jbin.servlet;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 import jbin.data.FileController;
 import jbin.domain.*;
-import jbin.util.DI;
+import jbin.util.ProvidedServlet;
+import jbin.util.UUIDUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ import java.util.UUID;
 @MultipartConfig
 @WebServlet(urlPatterns = "/c/*")
 @Slf4j
-public class CollectionServlet extends HttpServlet {
+public class CollectionServlet extends ProvidedServlet {
     private BinaryCollectionRepository binaryCollectionRepository;
     private BinaryFileRepository binaryFileRepository;
     private FileCollectionRepository fileCollectionRepository;
@@ -30,11 +30,10 @@ public class CollectionServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         super.init();
-        var di = (DI) getServletContext().getAttribute("di");
-        binaryCollectionRepository = di.binaryCollectionRepository();
-        binaryFileRepository = di.binaryFileRepository();
-        fileCollectionRepository = di.fileCollectionRepository();
-        fileController = di.fileController();
+        binaryCollectionRepository = inject(BinaryCollectionRepository.class);
+        binaryFileRepository = inject(BinaryFileRepository.class);
+        fileCollectionRepository = inject(FileCollectionRepository.class);
+        fileController = inject(FileController.class);
     }
 
     @Override
@@ -46,16 +45,12 @@ public class CollectionServlet extends HttpServlet {
         }
         var collectionId = split[1];
 
-        UUID collectionUUID;
-        try {
-            collectionUUID = UUID.fromString(collectionId);
-        } catch (Exception e) {
-            log.debug(e.toString());
+        var collectionUUID = UUIDUtil.from(collectionId);
+        if (collectionUUID.isEmpty()) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
-        var fileIds = getFileIds(collectionUUID);
-        System.out.println(fileIds);
+        var fileIds = getFileIds(collectionUUID.get());
         if (fileIds == null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -64,8 +59,7 @@ public class CollectionServlet extends HttpServlet {
             sendRawCollectionIds(response, fileIds);
             return;
         }
-        var collection = binaryCollectionRepository.findById(collectionUUID);
-        System.out.println(collection);
+        var collection = binaryCollectionRepository.findById(collectionUUID.get());
         if (collection.isEmpty()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -124,16 +118,13 @@ public class CollectionServlet extends HttpServlet {
                     log.info("Cannot create file");
                     return;
                 }
-                UUID collectionUUID;
-                try {
-                    collectionUUID = UUID.fromString(collectionId);
-                } catch (Exception e) {
-                    log.debug(e.toString());
+                var collectionUUID = UUIDUtil.from(collectionId);
+                if (collectionUUID.isEmpty()) {
                     return;
                 }
                 fileCollectionRepository.upsert(FileCollectionEntity.builder()
                         .fileId(id.get())
-                        .collectionId(collectionUUID)
+                        .collectionId(collectionUUID.get())
                         .build());
             }
         } catch (Exception e) {

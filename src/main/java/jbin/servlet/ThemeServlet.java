@@ -9,66 +9,50 @@ import jbin.data.UserController;
 import jbin.domain.ThemeEntity;
 import jbin.domain.ThemeRepository;
 import jbin.domain.UserRepository;
-import jbin.util.Base64Util;
-import jbin.util.DI;
-import jbin.util.StringUtil;
+import jbin.util.*;
 
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Objects;
 
 @WebServlet(urlPatterns = "/themes/*")
-public class ThemeServlet extends HttpServlet {
+public class ThemeServlet extends ProvidedServlet {
     private ThemeRepository themeRepository;
-    private UserController userController;
     private UserRepository userRepository;
 
     @Override
     public void init() throws ServletException {
-        var di = (DI) getServletContext().getAttribute("di");
-        themeRepository = di.themeRepository();
-        userController = di.userController();
-        userRepository = di.userRepository();
-        /*DI.getThemeRepository().upsert(new Theme(null, "Black", "#ffffff", "#000000", "", UUID.fromString("cd6aafea-7164-4653-9ecc-7414cd0c4eaa")));
-        DI.getThemeRepository().upsert(new Theme(null, "White", "#000000", "#ffffff", "", UUID.fromString("cd6aafea-7164-4653-9ecc-7414cd0c4eaa")));
-        DI.getThemeRepository().upsert(new Theme(null, "Purple Black", "#ccccff", "#000000", "", UUID.fromString("cd6aafea-7164-4653-9ecc-7414cd0c4eaa")));
-        DI.getThemeRepository().upsert(new Theme(null, "Purple White", "#595985", "#ffffff", "", UUID.fromString("cd6aafea-7164-4653-9ecc-7414cd0c4eaa")));
-        DI.getThemeRepository().upsert(new Theme(null, "Green Black", "#88f387", "#000000", "", UUID.fromString("cd6aafea-7164-4653-9ecc-7414cd0c4eaa")));
-        DI.getThemeRepository().upsert(new Theme(null, "Green White", "#3d773c", "#ffffff", "", UUID.fromString("cd6aafea-7164-4653-9ecc-7414cd0c4eaa")));
-        DI.getThemeRepository().upsert(new Theme(null, "Italic Romance", "#da5858", "#000000", "font-style: italic;", UUID.fromString("cd6aafea-7164-4653-9ecc-7414cd0c4eaa")));*/
+        themeRepository = inject(ThemeRepository.class);
+        userRepository = inject(UserRepository.class);
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setAttribute("themes", themeRepository.getAll());
-        req.setAttribute("user", Objects.toString(req.getSession().getAttribute("user"), ""));
+        req.setAttribute("user", Objects.toString(req.getSession().getAttribute(SessionKeys.USER), ""));
         getServletContext().getRequestDispatcher("/WEB-INF/views/themes.jsp").forward(req, resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        var info = StringUtil.trimStart(req.getPathInfo(), '/');
-        var action = info.substring(info.lastIndexOf("/") + 1);
-        var user = (String) req.getSession().getAttribute("user");
+        var user = (String) req.getSession().getAttribute(SessionKeys.USER);
         if (user == null) {
             resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
         }
-        if (action.equals("create")) {
-            var dbUser = userRepository.findByName(user);
-            if (dbUser.isEmpty()) {
-                resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-                return;
-            }
-            var id = themeRepository.upsert(ThemeEntity.builder()
-                    .name("Edit me")
-                    .foregroundColor("#ffffff")
-                    .backgroundColor("#000000")
-                    .owner(dbUser.get().id())
-                    .build());
-            if (id.isPresent()) {
-                try (var writer = resp.getWriter()) {
-                    writer.println(id);
-                }
+        var dbUser = userRepository.findByName(user);
+        if (dbUser.isEmpty()) {
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        var id = themeRepository.upsert(ThemeEntity.builder()
+                .name("Edit me")
+                .foregroundColor("#ffffff")
+                .backgroundColor("#000000")
+                .owner(dbUser.get().id())
+                .build());
+        if (id.isPresent()) {
+            try (var writer = resp.getWriter()) {
+                writer.println(id.get());
             }
         }
     }

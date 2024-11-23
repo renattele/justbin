@@ -1,20 +1,23 @@
 package jbin.orm;
 
 import jbin.util.SqlUtil;
+import lombok.extern.slf4j.Slf4j;
 
+import javax.sql.DataSource;
 import java.lang.reflect.*;
 import java.sql.*;
 import java.time.Instant;
 import java.util.*;
 
 @SuppressWarnings("unchecked")
+@Slf4j
 public class Orm {
-    private final Connection connection;
+    private final DataSource dataSource;
     private final SqlUtil util;
 
-    public Orm(Connection connection) {
-        this.connection = connection;
-        this.util = new SqlUtil(connection);
+    public Orm(DataSource dataSource) {
+        this.dataSource = dataSource;
+        this.util = new SqlUtil(dataSource);
     }
 
     public <T> T create(Class<T> clazz) {
@@ -23,30 +26,30 @@ public class Orm {
         return (T) Proxy.newProxyInstance(
                 clazz.getClassLoader(),
                 new Class[]{clazz},
-                (proxy, method, args) -> executeMethod(table.name(), method, args));
+                (proxy, method, args) -> executeMethod(method, args));
     }
 
-    private Object executeMethod(String tableName, Method method, Object[] args) {
-        var querySql = getQuerySql(tableName, method);
+    private Object executeMethod(Method method, Object[] args) {
+        var querySql = getQuerySql(method);
         if (querySql == null) {
             return null;
         }
         var returnType = method.getReturnType();
         UUID id = null;
-        try {
+        try(var connection = dataSource.getConnection()) {
             var statement = connection.prepareStatement(querySql);
             if (args != null) {
-                id = fillStatementAndGetUUID(args, id, statement);
+                id = fillStatementAndGetUUID(args, statement);
             }
             statement.closeOnCompletion();
             return processResult(method, returnType, statement, id);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.toString());
             return returnFailure(returnType);
         }
     }
 
-    private String getQuerySql(String tableName, Method method) {
+    private String getQuerySql(Method method) {
         var query = method.getAnnotation(Query.class);
         return query.value();
     }
@@ -82,8 +85,9 @@ public class Orm {
         }
     }
 
-    private UUID fillStatementAndGetUUID(Object[] args, UUID id, PreparedStatement statement)
+    private UUID fillStatementAndGetUUID(Object[] args, PreparedStatement statement)
             throws IllegalAccessException, InvocationTargetException, SQLException {
+        UUID id = null;
         int count = 1;
         for (Object currentArg : args) {
             var argClass = currentArg.getClass();
@@ -172,12 +176,12 @@ public class Orm {
 
     private void createSql(Table table) {
         if (!util.tableExists(table.name())) {
-            try {
+            try (var connection = dataSource.getConnection()) {
                 var statement = connection.createStatement();
                 statement.executeUpdate(table.createTable());
                 statement.closeOnCompletion();
             } catch (SQLException e) {
-                e.printStackTrace();
+                log.error(e.toString());
             }
         }
     }

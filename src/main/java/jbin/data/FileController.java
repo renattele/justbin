@@ -34,7 +34,7 @@ public class FileController {
 	public Optional<UUID> insert(BinaryFileEntity file, InputStream data) {
 		var id = repo.insert(file);
 		if (id.isEmpty()) return Optional.empty();
-		var localFile = new File(dataDir, id.toString());
+		var localFile = new File(dataDir, id.get().toString());
 		if (localFile.exists())
 			return id;
 		try {
