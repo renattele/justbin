@@ -18,7 +18,7 @@ import java.util.UUID;
         """)
 public interface FileCollectionRepository {
     @Query("""
-            insert into file_collection (id, file_id, collection_id) values (?, ?, ?)
+            insert into file_collection (id, file_id, collection_id) values (:id, :fileId, :collectionId)
             on conflict (id)
             do update set
             file_id = excluded.file_id,
@@ -26,24 +26,24 @@ public interface FileCollectionRepository {
             """)
     Optional<UUID> upsert(FileCollectionEntity fileCollection);
 
-    @Query("select * from file_collection where id = ?")
+    @Query("select * from file_collection where id = :id")
     Optional<FileCollectionEntity> findById(UUID id);
 
-    @Query("select * from file_collection where collection_id = ?")
+    @Query("select * from file_collection where collection_id = :id")
     List<FileCollectionEntity> getAllByCollectionId(UUID id);
 
-    @Query("select * from file_collection where file_id = ?")
+    @Query("select * from file_collection where file_id = :id")
     List<FileCollectionEntity> getAllByFileId(UUID id);
 
-    @Query("delete from file_collection where id = ?")
+    @Query("delete from file_collection where id = :id")
     boolean deleteById(UUID id);
 
-    @Query("delete from file_collection where file_id = ?")
+    @Query("delete from file_collection where file_id = :id")
     boolean deleteByFileId(UUID id);
 
-    @Query("delete from file_collection where file_id = ? and collection_id = ?")
+    @Query("delete from file_collection where file_id = :fileId and collection_id = :collectionId")
     boolean deleteByFileAndCollectionId(UUID fileId, UUID collectionId);
 
-    @Query("delete from file_collection where collection_id = ?")
+    @Query("delete from file_collection where collection_id = :id")
     boolean deleteAllByCollectionId(UUID id);
 }

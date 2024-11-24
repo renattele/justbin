@@ -18,14 +18,14 @@ import java.util.UUID;
         """)
 public interface BinaryFileRepository {
     @Query("""
-            insert into binary_files (id, name, creation_date, content_type) values (?, ?, ?, ?)
+            insert into binary_files (id, name, creation_date, content_type) values (:id, :name, :creationDate, :contentType)
             """)
     Optional<UUID> insert(BinaryFileEntity file);
 
-    @Query("delete from binary_files where id = ?")
+    @Query("delete from binary_files where id = :id")
     boolean delete(UUID id);
 
-    @Query("select * from binary_files where id = ?")
+    @Query("select * from binary_files where id = :id")
     Optional<BinaryFileEntity> findById(UUID id);
 
     @Query("select * from binary_files")

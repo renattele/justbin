@@ -20,7 +20,7 @@ import java.util.UUID;
         """)
 public interface ThemeRepository {
     @Query("""
-            insert into theme (id, name, foreground_color, background_color, css, owner) values (?, ?, ?, ?, ?, ?)
+            insert into theme (id, name, foreground_color, background_color, css, owner) values (:id, :name, :foregroundColor, :backgroundColor, :css, :owner)
             on conflict (id)
             do update set
             name = excluded.name,
@@ -30,12 +30,22 @@ public interface ThemeRepository {
             """)
     Optional<UUID> upsert(ThemeEntity theme);
 
+    @Query("""
+            update theme set
+            name = :name,
+            foreground_color = :foregroundColor,
+            background_color = :backgroundColor,
+            css = :css
+            where id = :id
+""")
+    boolean update(ThemeEntity theme);
+
     @Query("select * from theme")
     List<ThemeEntity> getAll();
 
-    @Query("select * from theme where id = ?")
+    @Query("select * from theme where id = :id")
     Optional<ThemeEntity> getById(UUID id);
 
-    @Query("delete from theme where id = ?")
+    @Query("delete from theme where id = :themeId")
     boolean delete(UUID themeId);
 }

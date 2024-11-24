@@ -62,7 +62,7 @@
         }
 
         function deleteTheme() {
-            return fetch("/t/<c:out value="${theme.id()}"/>/", {method: 'DELETE'}).then(response => {
+            return fetch("/t/<c:out value="${theme.id()}"/>", {method: 'DELETE'}).then(response => {
                 if (response.status === 200) {
                     navigateBack();
                 }

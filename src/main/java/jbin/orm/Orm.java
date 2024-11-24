@@ -2,6 +2,10 @@ package jbin.orm;
 
 import jbin.util.SqlUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import javax.sql.DataSource;
 import java.lang.reflect.*;
@@ -13,10 +17,13 @@ import java.util.*;
 @Slf4j
 public class Orm {
     private final DataSource dataSource;
+    private final NamedParameterJdbcTemplate namedTemplate;
     private final SqlUtil util;
 
     public Orm(DataSource dataSource) {
         this.dataSource = dataSource;
+        var template = new JdbcTemplate(dataSource);
+        this.namedTemplate = new NamedParameterJdbcTemplate(template);
         this.util = new SqlUtil(dataSource);
     }
 
@@ -31,19 +38,18 @@ public class Orm {
 
     private Object executeMethod(Method method, Object[] args) {
         var querySql = getQuerySql(method);
-        if (querySql == null) {
-            return null;
-        }
+        if (querySql == null) return null;
+
         var returnType = method.getReturnType();
         UUID id = null;
-        try(var connection = dataSource.getConnection()) {
-            var statement = connection.prepareStatement(querySql);
+        try {
+            var params = new MapSqlParameterSource();
             if (args != null) {
-                id = fillStatementAndGetUUID(args, statement);
+                id = fillParamsAndGetId(method, args, params);
             }
-            statement.closeOnCompletion();
-            return processResult(method, returnType, statement, id);
+            return processResult(method, querySql, id, params);
         } catch (Exception e) {
+            e.printStackTrace();
             log.error(e.toString());
             return returnFailure(returnType);
         }
@@ -54,118 +60,63 @@ public class Orm {
         return query.value();
     }
 
-    private Object processResult(Method method, Class<?> returnType, PreparedStatement statement, UUID id)
-            throws SQLException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    private Object processResult(Method method, String query, UUID id, MapSqlParameterSource params) {
+        var returnType = method.getReturnType();
         if (returnType == boolean.class) {
-            return statement.executeUpdate() > 0;
+            return namedTemplate.update(query, params) > 0;
         } else if (returnType == UUID.class) {
-            var result = statement.executeUpdate();
+            var result = namedTemplate.update(query, params);
             return result > 0 ? id : null;
         } else if (returnType == List.class) {
-            var result = statement.executeQuery();
-            var list = new ArrayList<>();
             var rawType = (ParameterizedType) method.getGenericReturnType();
             var listType = (Class<?>) rawType.getActualTypeArguments()[0];
-            while (result.next()) {
-                list.add(objectFromResult(result, listType));
-            }
-            return list;
+            return namedTemplate.query(query, params, new Mapper(listType));
         } else if (returnType == Optional.class) {
             var rawType = (ParameterizedType) method.getGenericReturnType();
             var optionalType = (Class<?>) rawType.getActualTypeArguments()[0];
             if (optionalType == UUID.class) {
-                var result = statement.executeUpdate();
+                var result = namedTemplate.update(query, params);
                 return result > 0 ? Optional.of(id) : Optional.empty();
             }
-            var result = statement.executeQuery();
-            return result.next() ? Optional.of(objectFromResult(result, optionalType)) : Optional.empty();
+            var result = namedTemplate.query(query, params, new Mapper(optionalType));
+            return Optional.ofNullable(result.isEmpty() ? null : result.getFirst());
         } else {
-            var result = statement.executeQuery();
-            return result.next() ? objectFromResult(result, returnType) : null;
+            return namedTemplate.queryForObject(query, params, new Mapper(returnType));
         }
     }
 
-    private UUID fillStatementAndGetUUID(Object[] args, PreparedStatement statement)
-            throws IllegalAccessException, InvocationTargetException, SQLException {
+    private UUID fillParamsAndGetId(Method method, Object[] args, MapSqlParameterSource params)
+            throws IllegalAccessException, InvocationTargetException {
         UUID id = null;
-        int count = 1;
-        for (Object currentArg : args) {
-            var argClass = currentArg.getClass();
+        for (int argIndex = 0; argIndex < args.length; argIndex++) {
+            var argCurrent = args[argIndex];
+            var argClass = argCurrent.getClass();
             if (argClass.isRecord()) {
                 var components = argClass.getRecordComponents();
                 for (RecordComponent component : components) {
-                    var value = component.getAccessor().invoke(currentArg);
                     var type = component.getType();
+                    var value = component.getAccessor().invoke(argCurrent);
                     if (type == UUID.class && component.getAnnotation(Id.class) != null) {
                         id = value == null ? UUID.randomUUID() : (UUID) value;
-                        setAutoStatement(statement, count++, id, type);
+                        params.addValue(component.getName(), id, Types.OTHER);
                     } else {
-                        setAutoStatement(statement, count++, value, type);
+                        params.addValue(component.getName(), value, Optional.ofNullable(value != null ? sqlTypes.get(value.getClass()) : null).orElse(Types.OTHER));
                     }
                 }
             } else {
-                setAutoStatement(statement, count++, currentArg, currentArg.getClass());
+                var paramName = method.getParameters()[argIndex].getName();
+                params.addValue(paramName, argCurrent, Optional.ofNullable(sqlTypes.get(argCurrent.getClass())).orElse(Types.OTHER));
             }
         }
         return id;
     }
 
-    private Object objectFromResult(ResultSet result, Class<?> returnType)
-            throws SQLException, InvocationTargetException, InstantiationException, IllegalAccessException {
-        var constructor = returnType.getConstructors()[0];
-        var args = new Object[constructor.getParameterCount()];
-        Parameter[] parameters = constructor.getParameters();
-        for (int i = 0; i < parameters.length; i++) {
-            var parameter = parameters[i];
-            var name = parameter.getName();
-            var nameAnnotation = parameter.getAnnotation(DbName.class);
-            var finalName = nameAnnotation != null ? nameAnnotation.value() : name;
-            args[i] = parameterFromResult(result, parameter, finalName);
-        }
-        return constructor.newInstance(args);
-    }
-
-    private Object parameterFromResult(ResultSet result, Parameter parameter, String name) throws SQLException {
-        var type = parameter.getType();
-        if (type == boolean.class) {
-            return result.getBoolean(name);
-        } else if (type == Integer.class) {
-            return result.getInt(name);
-        } else if (type == Long.class) {
-            return result.getLong(name);
-        } else if (type == Float.class) {
-            return result.getFloat(name);
-        } else if (type == Double.class) {
-            return result.getDouble(name);
-        } else if (type == String.class) {
-            return result.getString(name);
-        } else if (type == Instant.class) {
-            return result.getTimestamp(name).toInstant();
-        } else {
-            return result.getObject(name);
-        }
-    }
-
-    private void setAutoStatement(PreparedStatement statement, int count, Object value, Class<?> valueType)
-            throws SQLException {
-        if (valueType == boolean.class) {
-            statement.setBoolean(count, (Boolean) value);
-        } else if (valueType == Integer.class) {
-            statement.setInt(count, (Integer) value);
-        } else if (valueType == Long.class) {
-            statement.setLong(count, (Long) value);
-        } else if (valueType == Double.class) {
-            statement.setDouble(count, (Double) value);
-        } else if (valueType == String.class) {
-            statement.setString(count, (String) value);
-        } else if (valueType == UUID.class) {
-            statement.setObject(count, value);
-        } else if (valueType == Instant.class) {
-            statement.setTimestamp(count, Timestamp.from((Instant) value));
-        } else {
-            statement.setObject(count, value);
-        }
-    }
+    private static final Map<Class<?>, Integer> sqlTypes = Map.of(
+            String.class, Types.VARCHAR,
+            Integer.class, Types.INTEGER,
+            Long.class, Types.BIGINT,
+            Boolean.class, Types.BOOLEAN,
+            Float.class, Types.FLOAT);
 
     private Object returnFailure(Class<?> returnType) {
         if (returnType == boolean.class) {
@@ -182,6 +133,55 @@ public class Orm {
                 statement.closeOnCompletion();
             } catch (SQLException e) {
                 log.error(e.toString());
+            }
+        }
+    }
+
+    private record Mapper(Class<?> returnType) implements RowMapper<Object> {
+
+        @Override
+        public Object mapRow(ResultSet rs, int rowNum) {
+            try {
+                return objectFromResult(rs, returnType);
+            } catch (Exception e) {
+                log.error(e.toString());
+                return null;
+            }
+        }
+
+        private Object objectFromResult(ResultSet result, Class<?> returnType)
+                throws SQLException, InvocationTargetException, InstantiationException, IllegalAccessException {
+            var constructor = returnType.getConstructors()[0];
+            var args = new Object[constructor.getParameterCount()];
+            Parameter[] parameters = constructor.getParameters();
+            for (int i = 0; i < parameters.length; i++) {
+                var parameter = parameters[i];
+                var name = parameter.getName();
+                var nameAnnotation = parameter.getAnnotation(DbName.class);
+                var finalName = nameAnnotation != null ? nameAnnotation.value() : name;
+                args[i] = parameterFromResult(result, parameter, finalName);
+            }
+            return constructor.newInstance(args);
+        }
+
+        private Object parameterFromResult(ResultSet result, Parameter parameter, String name) throws SQLException {
+            var type = parameter.getType();
+            if (type == boolean.class) {
+                return result.getBoolean(name);
+            } else if (type == Integer.class) {
+                return result.getInt(name);
+            } else if (type == Long.class) {
+                return result.getLong(name);
+            } else if (type == Float.class) {
+                return result.getFloat(name);
+            } else if (type == Double.class) {
+                return result.getDouble(name);
+            } else if (type == String.class) {
+                return result.getString(name);
+            } else if (type == Instant.class) {
+                return result.getTimestamp(name).toInstant();
+            } else {
+                return result.getObject(name);
             }
         }
     }

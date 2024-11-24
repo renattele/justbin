@@ -15,16 +15,16 @@ import java.util.UUID;
         """)
 public interface BinaryCollectionRepository {
     @Query("""
-            insert into binary_collection (id, name) values (?, ?)
+            insert into binary_collection (id, name) values (:id, :name)
             on conflict (id)
             do update set
             name = excluded.name;
             """)
     Optional<UUID> upsert(BinaryCollectionEntity collection);
 
-    @Query("select * from binary_collection where id = ?")
+    @Query("select * from binary_collection where id = :id")
     Optional<BinaryCollectionEntity> findById(UUID id);
 
-    @Query("delete from binary_collection where id = ?")
+    @Query("delete from binary_collection where id = :id")
     boolean delete(UUID id);
 }

@@ -16,19 +16,19 @@ import java.util.UUID;
         """)
 public interface UserRepository {
     @Query("""
-            insert into users (id, username, password_hash) values (?, ?, ?)
+            insert into users (id, username, password_hash) values (:id, :username, :passwordHash)
             on conflict (id)
             do update set
             password_hash = excluded.password_hash;
             """)
     boolean upsert(UserEntity user);
 
-    @Query("select * from users where username = ?")
+    @Query("select * from users where username = :name")
     Optional<UserEntity> findByName(String name);
 
-    @Query("select * from users where id = ?")
+    @Query("select * from users where id = :id")
     Optional<UserEntity> findById(UUID id);
 
-    @Query("delete from users where username = ?")
+    @Query("delete from users where username = :name")
     boolean deleteByName(String name);
 }

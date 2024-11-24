@@ -79,7 +79,7 @@ public class ThemeEditorServlet extends ProvidedServlet {
                     .css(css)
                     .owner(oldTheme.get().owner())
                     .build();
-            themeRepository.upsert(newTheme);
+            themeRepository.update(newTheme);
         }
     }
 
