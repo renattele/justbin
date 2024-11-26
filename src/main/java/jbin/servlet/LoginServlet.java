@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jbin.data.UserController;
 import jbin.util.Base64Util;
+import jbin.util.Injected;
 import jbin.util.ProvidedServlet;
 import jbin.util.SessionKeys;
 
@@ -13,13 +14,8 @@ import java.io.IOException;
 
 @WebServlet(urlPatterns = "/login")
 public class LoginServlet extends ProvidedServlet {
+    @Injected
     private UserController userController;
-
-    @Override
-    public void init() throws ServletException {
-        super.init();
-        userController = inject(UserController.class);
-    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

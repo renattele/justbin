@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 import jbin.data.FileController;
 import jbin.domain.*;
+import jbin.util.Injected;
 import jbin.util.ProvidedServlet;
 import jbin.util.UUIDUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -22,19 +23,14 @@ import java.util.UUID;
 @WebServlet(urlPatterns = "/c/*")
 @Slf4j
 public class CollectionServlet extends ProvidedServlet {
+    @Injected
     private BinaryCollectionRepository binaryCollectionRepository;
+    @Injected
     private BinaryFileRepository binaryFileRepository;
+    @Injected
     private FileCollectionRepository fileCollectionRepository;
+    @Injected
     private FileController fileController;
-
-    @Override
-    public void init() throws ServletException {
-        super.init();
-        binaryCollectionRepository = inject(BinaryCollectionRepository.class);
-        binaryFileRepository = inject(BinaryFileRepository.class);
-        fileCollectionRepository = inject(FileCollectionRepository.class);
-        fileController = inject(FileController.class);
-    }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

@@ -18,15 +18,10 @@ import java.util.Optional;
 @WebServlet("/t/*")
 @Slf4j
 public class ThemeEditorServlet extends ProvidedServlet {
+    @Injected
     private ThemeRepository themeRepository;
+    @Injected
     private UserRepository userRepository;
-
-    @Override
-    public void init() throws ServletException {
-        super.init();
-        themeRepository = inject(ThemeRepository.class);
-        userRepository = inject(UserRepository.class);
-    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {

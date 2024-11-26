@@ -21,14 +21,8 @@ import java.util.UUID;
 public interface ThemeRepository {
     @Query("""
             insert into theme (id, name, foreground_color, background_color, css, owner) values (:id, :name, :foregroundColor, :backgroundColor, :css, :owner)
-            on conflict (id)
-            do update set
-            name = excluded.name,
-            foreground_color = excluded.foreground_color,
-            background_color = excluded.background_color,
-            css = excluded.css
             """)
-    Optional<UUID> upsert(ThemeEntity theme);
+    Optional<UUID> insert(ThemeEntity theme);
 
     @Query("""
             update theme set

@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jbin.data.FileController;
 import jbin.domain.BinaryFileRepository;
+import jbin.util.Injected;
 import jbin.util.ProvidedServlet;
 import jbin.util.StringUtil;
 import jbin.util.UUIDUtil;
@@ -14,14 +15,10 @@ import java.io.IOException;
 
 @WebServlet(urlPatterns = "/d/*")
 public class FileDownloadServlet extends ProvidedServlet {
+    @Injected
     private BinaryFileRepository binaryFileRepository;
+    @Injected
     private FileController fileController;
-    @Override
-    public void init() throws ServletException {
-        super.init();
-        binaryFileRepository = inject(BinaryFileRepository.class);
-        fileController = inject(FileController.class);
-    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {

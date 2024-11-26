@@ -2,29 +2,22 @@ package jbin.servlet;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jbin.data.UserController;
 import jbin.domain.ThemeEntity;
 import jbin.domain.ThemeRepository;
 import jbin.domain.UserRepository;
 import jbin.util.*;
 
 import java.io.IOException;
-import java.util.Base64;
 import java.util.Objects;
 
 @WebServlet(urlPatterns = "/themes/*")
 public class ThemeServlet extends ProvidedServlet {
+    @Injected
     private ThemeRepository themeRepository;
+    @Injected
     private UserRepository userRepository;
-
-    @Override
-    public void init() throws ServletException {
-        themeRepository = inject(ThemeRepository.class);
-        userRepository = inject(UserRepository.class);
-    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -44,7 +37,7 @@ public class ThemeServlet extends ProvidedServlet {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
-        var id = themeRepository.upsert(ThemeEntity.builder()
+        var id = themeRepository.insert(ThemeEntity.builder()
                 .name("Edit me")
                 .foregroundColor("#ffffff")
                 .backgroundColor("#000000")

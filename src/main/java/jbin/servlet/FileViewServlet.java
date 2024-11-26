@@ -8,6 +8,7 @@ import jbin.data.FileController;
 import jbin.domain.BinaryFileRepository;
 import jbin.domain.FileCollectionEntity;
 import jbin.domain.FileCollectionRepository;
+import jbin.util.Injected;
 import jbin.util.ProvidedServlet;
 import jbin.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -18,17 +19,12 @@ import java.util.UUID;
 @WebServlet(urlPatterns = "/v/*")
 @Slf4j
 public class FileViewServlet extends ProvidedServlet {
+    @Injected
     private BinaryFileRepository binaryFileRepository;
+    @Injected
     private FileCollectionRepository fileCollectionRepository;
+    @Injected
     private FileController fileController;
-
-    @Override
-    public void init() throws ServletException {
-        super.init();
-        binaryFileRepository = inject(BinaryFileRepository.class);
-        fileController = inject(FileController.class);
-        fileCollectionRepository = inject(FileCollectionRepository.class);
-    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
