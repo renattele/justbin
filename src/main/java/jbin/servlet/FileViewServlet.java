@@ -52,7 +52,6 @@ public class FileViewServlet extends ProvidedServlet {
         try {
             var requestName = req.getPathInfo().replaceFirst("/", "");
             var split = requestName.split("/");
-            System.out.println(requestName);
             var fileId = UUID.fromString(split[0]);
             if (split[1].equals("toggle_collection")) {
                 var collectionId = UUID.fromString(req.getParameter("q"));

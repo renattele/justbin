@@ -17,7 +17,6 @@ public class DataSourceControllerImpl implements DataSourceController<DataSource
         try {
             Class.forName("org.postgresql.Driver");
             var config = new HikariConfig();
-            System.out.println(url + dbName);
             config.setJdbcUrl(url + dbName);
             config.setUsername(username);
             config.setPassword(password);

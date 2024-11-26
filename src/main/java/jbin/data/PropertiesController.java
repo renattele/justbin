@@ -16,7 +16,6 @@ public class PropertiesController {
         try {
             properties.load(PropertiesController.class.getClassLoader().getResourceAsStream(fileName));
             cache.put(fileName, properties);
-            System.out.println(cache);
             return properties;
         } catch (IOException e) {
             e.printStackTrace(System.out);
