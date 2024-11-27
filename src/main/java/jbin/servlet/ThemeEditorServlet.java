@@ -88,6 +88,6 @@ public class ThemeEditorServlet extends ProvidedServlet {
     private Optional<ThemeEntity> getThemeFromRequest(HttpServletRequest req) {
         var path = StringUtil.trimStart(req.getPathInfo(), '/');
         var uuid = UUIDUtil.from(path);
-        return uuid.flatMap(id -> themeRepository.getById(id));
+        return uuid.flatMap(themeRepository::getById);
     }
 }

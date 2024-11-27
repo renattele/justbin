@@ -11,10 +11,10 @@ import jbin.domain.FileCollectionRepository;
 import jbin.util.Injected;
 import jbin.util.ProvidedServlet;
 import jbin.util.StringUtil;
+import jbin.util.UUIDUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.util.UUID;
 
 @WebServlet(urlPatterns = "/v/*")
 @Slf4j
@@ -29,7 +29,12 @@ public class FileViewServlet extends ProvidedServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         var fileId = StringUtil.trimStart(req.getPathInfo(), '/');
-        var file = binaryFileRepository.findById(UUID.fromString(fileId));
+        var uuid = UUIDUtil.from(fileId);
+        if (uuid.isEmpty()) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+        var file = binaryFileRepository.findById(uuid.get());
         if (file.isEmpty()) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -52,15 +57,31 @@ public class FileViewServlet extends ProvidedServlet {
         try {
             var requestName = req.getPathInfo().replaceFirst("/", "");
             var split = requestName.split("/");
-            var fileId = UUID.fromString(split[0]);
+            if (split.length < 2) {
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                return;
+            }
+            var fileId = UUIDUtil.from(split[0]);
+            if (fileId.isEmpty()) {
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                return;
+            }
             if (split[1].equals("toggle_collection")) {
-                var collectionId = UUID.fromString(req.getParameter("q"));
-                var exists = fileCollectionRepository.getAllByCollectionId(collectionId)
-                        .stream().anyMatch(fileCollection -> fileCollection.fileId().equals(fileId));
+                var collectionId = UUIDUtil.from(req.getParameter("q"));
+                if (collectionId.isEmpty()) {
+                    resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                    return;
+                }
+                var exists = fileCollectionRepository.getAllByCollectionId(collectionId.get())
+                        .stream()
+                        .anyMatch(fileCollection -> fileCollection.fileId().equals(fileId.get()));
                 if (exists) {
-                    fileCollectionRepository.deleteByFileAndCollectionId(fileId, collectionId);
+                    fileCollectionRepository.deleteByFileAndCollectionId(fileId.get(), collectionId.get());
                 } else {
-                    fileCollectionRepository.upsert(FileCollectionEntity.builder().fileId(fileId).collectionId(collectionId).build());
+                    fileCollectionRepository.upsert(FileCollectionEntity.builder()
+                            .fileId(fileId.get())
+                            .collectionId(collectionId.get())
+                            .build());
                 }
             }
         } catch (Exception e) {

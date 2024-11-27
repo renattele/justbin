@@ -19,7 +19,11 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-@MultipartConfig
+@MultipartConfig(
+        fileSizeThreshold = 1024 * 1024 * 10, // 10 MB
+        maxFileSize = 1024 * 1024 * 50, // 50 MB
+        maxRequestSize = 1024 * 1024 * 100 // 100 MB
+)
 @WebServlet(urlPatterns = "/c/*")
 @Slf4j
 public class CollectionServlet extends ProvidedServlet {
@@ -92,7 +96,7 @@ public class CollectionServlet extends ProvidedServlet {
         if (requestName.equals("create")) {
             createCollection(resp);
         } else if (requestName.endsWith("edit_name")) {
-            editName(req, requestName);
+            editName(req, resp, requestName);
         } else if (requestName.endsWith("create_bin")) {
             createFiles(req, requestName);
         }
@@ -128,19 +132,18 @@ public class CollectionServlet extends ProvidedServlet {
         }
     }
 
-    private void editName(HttpServletRequest req, String requestName) throws IOException {
+    private void editName(HttpServletRequest req, HttpServletResponse resp, String requestName) throws IOException {
         var id = requestName.substring(0, requestName.indexOf('/'));
         var newName = req.getReader().readLine();
-        UUID uuid;
-        try {
-            uuid = UUID.fromString(id);
-        } catch (Exception e) {
-            log.debug(e.toString());
+        var uuid = UUIDUtil.from(id);
+        if (uuid.isEmpty()) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
+
         binaryCollectionRepository.upsert(
                 BinaryCollectionEntity.builder()
-                        .id(uuid)
+                        .id(uuid.get())
                         .name(newName)
                         .build()
         );

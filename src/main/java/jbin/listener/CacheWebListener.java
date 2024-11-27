@@ -10,9 +10,6 @@ import jbin.domain.*;
 import jbin.orm.Orm;
 import jbin.util.ProvidedListener;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-
 @WebListener
 public class CacheWebListener extends ProvidedListener {
     @Override
