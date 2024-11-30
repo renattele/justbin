@@ -18,9 +18,16 @@ public class PropertiesController {
             cache.put(fileName, properties);
             return properties;
         } catch (IOException e) {
-            e.printStackTrace(System.out);
             log.error(e.toString());
         }
         return null;
+    }
+
+    public Properties loadWithEnvironment(String fileName) {
+        var properties = load(fileName);
+        for (var entry : System.getenv().entrySet()) {
+            properties.setProperty(entry.getKey(), entry.getValue());
+        }
+        return properties;
     }
 }

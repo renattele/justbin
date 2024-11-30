@@ -6,8 +6,9 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
-import jbin.data.FileController;
-import jbin.domain.*;
+import jbin.data.FileService;
+import jbin.entity.BinaryCollectionEntity;
+import jbin.entity.BinaryFileEntity;
 import jbin.util.Injected;
 import jbin.util.ProvidedServlet;
 import jbin.util.UUIDUtil;
@@ -28,13 +29,7 @@ import java.util.UUID;
 @Slf4j
 public class CollectionServlet extends ProvidedServlet {
     @Injected
-    private BinaryCollectionRepository binaryCollectionRepository;
-    @Injected
-    private BinaryFileRepository binaryFileRepository;
-    @Injected
-    private FileCollectionRepository fileCollectionRepository;
-    @Injected
-    private FileController fileController;
+    private FileService fileService;
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -50,44 +45,35 @@ public class CollectionServlet extends ProvidedServlet {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
-        var fileIds = getFileIds(collectionUUID.get());
-        if (fileIds == null) {
+        var files = fileService.getByCollectionId(collectionUUID.get());
+        if (files.isEmpty()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
         if (split.length == 3 && split[2].equals("raw")) {
-            sendRawCollectionIds(response, fileIds);
+            var ids = files.get().stream().map(BinaryFileEntity::id).toList();
+            sendRawCollectionIds(response, ids);
             return;
         }
-        var collection = binaryCollectionRepository.findById(collectionUUID.get());
+        var collection = fileService.findCollectionById(collectionUUID.get());
         if (collection.isEmpty()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
-        var files = fileIds.stream()
-                .map(fileCollection -> binaryFileRepository.findById(fileCollection.fileId()).orElse(null)).toList();
-        request.setAttribute("files", files);
+        request.setAttribute("files", files.get());
         request.setAttribute("collectionName", collection.get().name());
         request.setAttribute("collectionID", collection.get().id().toString());
         getServletConfig().getServletContext().getRequestDispatcher("/WEB-INF/views/collection.jsp").forward(request,
                 response);
     }
 
-    private static void sendRawCollectionIds(HttpServletResponse response, List<FileCollectionEntity> fileIds) throws IOException {
+    private static void sendRawCollectionIds(HttpServletResponse response, List<UUID> fileIds) throws IOException {
         try (var writer = response.getWriter()) {
-            for (FileCollectionEntity fileCollection : fileIds) {
-                writer.println(fileCollection.fileId().toString());
+            for (var id : fileIds) {
+                writer.println(id.toString());
             }
             writer.flush();
         }
-    }
-
-    private List<FileCollectionEntity> getFileIds(UUID id) {
-        var collection = binaryCollectionRepository.findById(id);
-        if (collection.isEmpty()) {
-            return null;
-        }
-        return fileCollectionRepository.getAllByCollectionId(id);
     }
 
     @Override
@@ -113,7 +99,7 @@ public class CollectionServlet extends ProvidedServlet {
                         .creationDate(Instant.now())
                         .contentType(type)
                         .build();
-                var id = fileController.insert(file, part.getInputStream());
+                var id = fileService.insert(file, part.getInputStream());
                 if (id.isEmpty()) {
                     log.info("Cannot create file");
                     return;
@@ -122,10 +108,7 @@ public class CollectionServlet extends ProvidedServlet {
                 if (collectionUUID.isEmpty()) {
                     return;
                 }
-                fileCollectionRepository.upsert(FileCollectionEntity.builder()
-                        .fileId(id.get())
-                        .collectionId(collectionUUID.get())
-                        .build());
+                fileService.toggleFileForCollection(collectionUUID.get(), id.get());
             }
         } catch (Exception e) {
             log.debug(e.toString());
@@ -134,29 +117,30 @@ public class CollectionServlet extends ProvidedServlet {
 
     private void editName(HttpServletRequest req, HttpServletResponse resp, String requestName) throws IOException {
         var id = requestName.substring(0, requestName.indexOf('/'));
-        var newName = req.getReader().readLine();
-        var uuid = UUIDUtil.from(id);
-        if (uuid.isEmpty()) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
+        try (var reader = req.getReader()) {
+            var newName = reader.readLine();
+            var uuid = UUIDUtil.from(id);
+            if (uuid.isEmpty()) {
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                return;
+            }
 
-        binaryCollectionRepository.upsert(
-                BinaryCollectionEntity.builder()
-                        .id(uuid.get())
-                        .name(newName)
-                        .build()
-        );
+            fileService.upsertCollection(BinaryCollectionEntity.builder()
+                    .id(uuid.get())
+                    .name(newName)
+                    .build());
+        }
     }
 
     private void createCollection(HttpServletResponse resp) throws IOException {
-        var id = binaryCollectionRepository.upsert(BinaryCollectionEntity.builder()
+        var id = fileService.upsertCollection(BinaryCollectionEntity.builder()
                 .name("Edit me")
                 .build()).orElse(null);
-        var writer = new PrintWriter(resp.getWriter());
-        writer.println(id);
-        resp.setContentType("text/plain");
-        resp.setCharacterEncoding("UTF-8");
-        writer.flush();
+        try (var writer = new PrintWriter(resp.getWriter())) {
+            writer.println(id);
+            resp.setContentType("text/plain");
+            resp.setCharacterEncoding("UTF-8");
+            writer.flush();
+        }
     }
 }

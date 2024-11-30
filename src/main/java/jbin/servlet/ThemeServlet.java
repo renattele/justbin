@@ -4,9 +4,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jbin.domain.ThemeEntity;
-import jbin.domain.ThemeRepository;
-import jbin.domain.UserRepository;
+import jbin.data.ThemeService;
+import jbin.data.UserService;
 import jbin.util.*;
 
 import java.io.IOException;
@@ -15,13 +14,13 @@ import java.util.Objects;
 @WebServlet(urlPatterns = "/themes/*")
 public class ThemeServlet extends ProvidedServlet {
     @Injected
-    private ThemeRepository themeRepository;
+    private ThemeService themeService;
     @Injected
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        req.setAttribute("themes", themeRepository.getAll());
+        req.setAttribute("themes", themeService.getAll());
         req.setAttribute("user", Objects.toString(req.getSession().getAttribute(SessionKeys.USER), ""));
         getServletContext().getRequestDispatcher("/WEB-INF/views/themes.jsp").forward(req, resp);
     }
@@ -32,17 +31,12 @@ public class ThemeServlet extends ProvidedServlet {
         if (user == null) {
             resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
         }
-        var dbUser = userRepository.findByName(user);
+        var dbUser = userService.findByName(user);
         if (dbUser.isEmpty()) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
-        var id = themeRepository.insert(ThemeEntity.builder()
-                .name("Edit me")
-                .foregroundColor("#ffffff")
-                .backgroundColor("#000000")
-                .owner(dbUser.get().id())
-                .build());
+        var id = themeService.create(user);
         if (id.isPresent()) {
             try (var writer = resp.getWriter()) {
                 writer.println(id.get());

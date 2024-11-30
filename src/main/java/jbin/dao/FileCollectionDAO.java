@@ -1,5 +1,6 @@
-package jbin.domain;
+package jbin.dao;
 
+import jbin.entity.FileCollectionEntity;
 import jbin.orm.Query;
 import jbin.orm.Table;
 
@@ -8,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Table(name = "file_collection", createTable = """
-        create table file_collection(
+        create table if not exists file_collection(
             id uuid primary key,
             file_id uuid not null,
             collection_id uuid not null,
@@ -16,7 +17,7 @@ import java.util.UUID;
             foreign key (collection_id) references binary_collection(id)
         )
         """)
-public interface FileCollectionRepository {
+public interface FileCollectionDAO {
     @Query("""
             insert into file_collection (id, file_id, collection_id) values (:id, :fileId, :collectionId)
             on conflict (id)

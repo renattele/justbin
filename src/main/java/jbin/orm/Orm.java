@@ -79,7 +79,7 @@ public class Orm {
                 return result > 0 ? Optional.of(id) : Optional.empty();
             }
             var result = namedTemplate.query(query, params, new Mapper(optionalType));
-            return Optional.ofNullable(result.isEmpty() ? null : result.getFirst());
+            return Optional.ofNullable(result.isEmpty() ? null : result.get(0));
         } else {
             return namedTemplate.queryForObject(query, params, new Mapper(returnType));
         }

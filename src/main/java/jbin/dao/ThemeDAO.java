@@ -1,5 +1,6 @@
-package jbin.domain;
+package jbin.dao;
 
+import jbin.entity.ThemeEntity;
 import jbin.orm.Query;
 import jbin.orm.Table;
 
@@ -8,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Table(name = "theme", createTable = """
-        create table theme(
+        create table if not exists theme(
             id uuid primary key,
             name varchar(10000),
             foreground_color varchar(100),
@@ -18,7 +19,7 @@ import java.util.UUID;
             foreign key (owner) references users(id)
         )
         """)
-public interface ThemeRepository {
+public interface ThemeDAO {
     @Query("""
             insert into theme (id, name, foreground_color, background_color, css, owner) values (:id, :name, :foregroundColor, :backgroundColor, :css, :owner)
             """)

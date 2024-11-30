@@ -1,5 +1,6 @@
-package jbin.domain;
+package jbin.dao;
 
+import jbin.entity.BinaryFileEntity;
 import jbin.orm.Query;
 import jbin.orm.Table;
 
@@ -8,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Table(name = "binary_files", createTable = """
-        create table binary_files
+        create table if not exists binary_files
         (
             id uuid primary key not null ,
             name varchar(10000) not null ,
@@ -16,7 +17,7 @@ import java.util.UUID;
             content_type varchar(255)
         );
         """)
-public interface BinaryFileRepository {
+public interface BinaryFileDAO {
     @Query("""
             insert into binary_files (id, name, creation_date, content_type) values (:id, :name, :creationDate, :contentType)
             """)
@@ -30,4 +31,7 @@ public interface BinaryFileRepository {
 
     @Query("select * from binary_files")
     List<BinaryFileEntity> getAll();
+
+    @Query("delete from binary_files where id not in (select file_id from file_collection) returning *")
+    List<BinaryFileEntity> deleteOrphans();
 }

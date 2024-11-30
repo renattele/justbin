@@ -1,4 +1,4 @@
-package jbin.domain;
+package jbin.entity;
 
 import jbin.orm.DbName;
 import jbin.orm.Id;

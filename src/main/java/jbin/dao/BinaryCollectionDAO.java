@@ -1,5 +1,6 @@
-package jbin.domain;
+package jbin.dao;
 
+import jbin.entity.BinaryCollectionEntity;
 import jbin.orm.Query;
 import jbin.orm.Table;
 
@@ -7,13 +8,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Table(name = "binary_collection", createTable = """
-        create table binary_collection
+        create table if not exists binary_collection
         (
             id uuid primary key,
             name varchar(10000)
         );
         """)
-public interface BinaryCollectionRepository {
+public interface BinaryCollectionDAO {
     @Query("""
             insert into binary_collection (id, name) values (:id, :name)
             on conflict (id)
