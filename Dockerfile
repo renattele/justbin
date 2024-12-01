@@ -13,7 +13,6 @@ FROM tomee:10.0.0-M3-jre17-plume
 
 WORKDIR /usr/local/tomee
 
-ENV DATA_DIR=/app/state
 COPY --from=build /app/target/*.war ./webapps/ROOT.war
 COPY --from=build /app/target/justbin ./webapps/ROOT
 

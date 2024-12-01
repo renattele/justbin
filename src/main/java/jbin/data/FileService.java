@@ -1,6 +1,7 @@
 package jbin.data;
 
 import jbin.dao.BinaryCollectionDAO;
+import jbin.domain.FileBucket;
 import jbin.entity.BinaryCollectionEntity;
 import jbin.entity.BinaryFileEntity;
 import jbin.dao.BinaryFileDAO;
@@ -9,27 +10,20 @@ import jbin.entity.FileCollectionEntity;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 @Slf4j
 public class FileService {
     private final BinaryFileDAO binaryFileDAO;
-    private final File dataDir;
     private final FileCollectionDAO fileCollectionDAO;
     private final BinaryCollectionDAO binaryCollectionDAO;
+    private final FileBucket fileBucket;
 
-    public FileService(BinaryFileDAO binaryFileDAO, FileCollectionDAO fileCollectionRepo, BinaryCollectionDAO binaryCollectionDAO) {
+    public FileService(BinaryFileDAO binaryFileDAO, FileCollectionDAO fileCollectionRepo, BinaryCollectionDAO binaryCollectionDAO, FileBucket bucket) {
         this.binaryFileDAO = binaryFileDAO;
         this.fileCollectionDAO = fileCollectionRepo;
         this.binaryCollectionDAO = binaryCollectionDAO;
-        var dataDirPath = System.getenv("DATA_DIR");
-        if (dataDirPath == null)
-            dataDirPath = System.getenv("HOME") + "/.jbin";
-        this.dataDir = new File(dataDirPath);
-        if (!dataDir.exists())
-            dataDir.mkdirs();
+        this.fileBucket = bucket;
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
@@ -41,16 +35,9 @@ public class FileService {
     public Optional<UUID> insert(BinaryFileEntity file, InputStream data) {
         var id = binaryFileDAO.insert(file);
         if (id.isEmpty()) return Optional.empty();
-        var localFile = new File(dataDir, id.get().toString());
-        if (localFile.exists())
-            return id;
-        try {
-            Files.copy(data, localFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            return id;
-        } catch (IOException e) {
-            log.error(e.toString());
-            return Optional.empty();
-        }
+        var uploaded = fileBucket.put(id.get().toString(), data);
+        if (uploaded) return id;
+        else return Optional.empty();
     }
 
     public Optional<BinaryFileEntity> findById(UUID id) {
@@ -92,26 +79,17 @@ public class FileService {
         return binaryCollectionDAO.upsert(collection);
     }
 
-    public InputStream get(String fileId) {
-        var file = new File(dataDir, fileId);
-        try {
-            return new BufferedInputStream(new FileInputStream(file));
-        } catch (FileNotFoundException e) {
-            log.error(e.toString());
-            return null;
-        }
+    public Optional<InputStream> get(String fileId) {
+        return fileBucket.get(fileId);
     }
 
     public boolean delete(String fileId) {
-        var file = new File(dataDir, fileId);
-        if (!file.exists())
-            return false;
         try {
             var deletedFromRepo = binaryFileDAO.delete(UUID.fromString(fileId));
-            var deletedLocally = file.delete();
-            return deletedFromRepo && deletedLocally;
+            var deletedFromBucket = fileBucket.delete(fileId);
+            return deletedFromRepo && deletedFromBucket;
         } catch (Exception e) {
-            log.error(e.toString());
+            log.error(e.toString(), e);
             return false;
         }
     }
@@ -123,7 +101,7 @@ public class FileService {
                 delete(file.id().toString());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.toString(), e);
         }
     }
 }

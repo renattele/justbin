@@ -39,9 +39,13 @@ public class FileViewServlet extends ProvidedServlet {
         req.setAttribute("content", "");
         if (file.get().contentType().startsWith("text")) {
             var content = fileService.get(file.get().id().toString());
-            var contentString = new String(content.readAllBytes());
+            if (content.isEmpty()) {
+                resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+            var contentString = new String(content.get().readAllBytes());
             req.setAttribute("content", contentString);
-            content.close();
+            content.get().close();
         }
         getServletContext().getRequestDispatcher("/WEB-INF/views/file_view.jsp").forward(req, resp);
     }

@@ -26,8 +26,14 @@ public class CacheWebListener extends ProvidedListener {
         var fileCollectionDAO = orm.create(FileCollectionDAO.class);
         var themeDAO = orm.create(ThemeDAO.class);
         var userDAO = orm.create(UserDAO.class);
+        var fileBucket = new S3FileBucket(
+                appProperties.get("S3_ENDPOINT").toString(),
+                appProperties.get("S3_ACCESS_KEY").toString(),
+                appProperties.get("S3_SECRET_KEY").toString(),
+                appProperties.get("S3_BUCKET").toString()
+        );
         var userService = new UserService(userDAO);
-        var fileService = new FileService(binaryFileDAO, fileCollectionDAO, binaryCollectionDAO);
+        var fileService = new FileService(binaryFileDAO, fileCollectionDAO, binaryCollectionDAO, fileBucket);
         var themeService = new ThemeService(themeDAO, userService);
         provide(sce,
                 binaryCollectionDAO,
@@ -35,6 +41,7 @@ public class CacheWebListener extends ProvidedListener {
                 fileCollectionDAO,
                 themeDAO,
                 userDAO,
+                fileBucket,
                 userService,
                 fileService,
                 themeService

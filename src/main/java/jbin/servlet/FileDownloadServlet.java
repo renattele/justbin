@@ -32,9 +32,13 @@ public class FileDownloadServlet extends ProvidedServlet {
         }
         resp.setContentType(file.get().contentType());
         var stream = fileService.get(file.get().id().toString());
+        if (stream.isEmpty()) {
+            resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
         var out = resp.getOutputStream();
-        stream.transferTo(out);
-        stream.close();
+        stream.get().transferTo(out);
+        stream.get().close();
         out.close();
     }
 }
