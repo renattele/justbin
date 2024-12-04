@@ -1,8 +1,6 @@
 <%--suppress JspAbsolutePathInspection --%>
-<jsp:useBean id="content" scope="request" type="java.lang.String"/>
 <jsp:useBean id="filename" scope="request" type="java.lang.String"/>
 <jsp:useBean id="fileId" scope="request" type="java.lang.String"/>
-<jsp:useBean id="contentType" scope="request" type="java.lang.String"/>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <!DOCTYPE html>
